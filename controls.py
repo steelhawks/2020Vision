@@ -11,6 +11,10 @@ class Controls():
         self.enable_processing = False
         self.camera_mode = CAMERA_MODE_RAW
 
+        self.enable_feed
+        self.turn_camera_off = False
+
+
     def connect(self):
         controller_listener.connect(self)
 

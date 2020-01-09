@@ -228,14 +228,10 @@ const Socket = new function () {
 	                 retrieve the value and it is an unexpected type, an exception
 	                 will be thrown and your robot may crash. You have been warned.
     */
-	this.putValue = function(key, value) {
+	this.send = function(msg) {
 		if (!socketOpen)
 			return false;
-
-		if (value === undefined)
-			throw new Error(key + ": 'undefined' passed to putValue");
-
-		socket.send(JSON.stringify({'k': key, 'v': value}));
+		socket.send(JSON.stringify(msg));
 		return true;
 	};
 

@@ -6,6 +6,9 @@ from tornado.web import StaticFileHandler
 from tornado.websocket import WebSocketHandler, WebSocketClosedError
 
 import logging
+import time
+
+import network as networktables
 
 from controls import main_controller
 
@@ -28,11 +31,20 @@ class DashboardWebSocket(WebSocketHandler):
         return True
 
     def on_message(self, message):
-        print(message)
+
+        controls = json.loads(message)
+
+        dashboard = networktables.get()
+        dashboard.putBoolean(networktables.keys.vision_enable_camera, controls['enable_camera'])
+
+        # print(controls['enable_camera'])
+        # main_controller.enable_camera = controls['enable_camera']
+
         data = dict(enable_camera=main_controller.enable_camera,
             camera_mode=main_controller.camera_mode,
             enable_processing=main_controller.enable_processing)
 
+        print(json.dumps(data))
         self.send_msg_threadsafe(json.dumps(data))
 
     def send_msg(self, msg):
