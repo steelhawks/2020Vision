@@ -8,13 +8,9 @@ from processing import cube_tracker
 from controls import main_controller
 from controls import CAMERA_MODE_RAW, CAMERA_MODE_BALL, CAMERA_MODE_HEXAGON
 
-from web import tornado_server
-
 def main():
 
     networktables.init()
-
-    tornado_server.start()
 
     dashboard = networktables.get()
 
@@ -40,6 +36,7 @@ def main():
 
         else:
             # IDLE mode
+            cv2.destroyAllWindows()
             time.sleep(.3)
 
         # if cv2.waitKey(1) & 0xFF == ord('q'):
@@ -48,7 +45,6 @@ def main():
     if cap is not None:
         cap.release()
 
-    cv2.destroyAllWindows()
 
 
 def single_frame(debug=False):
