@@ -1,34 +1,52 @@
 import cv2
 import config
+import time
+
 import network as networktables
 from cameras import logitech_c270, generic
 from processing import cube_tracker
+from controls import main_controller
+from controls import CAMERA_MODE_RAW, CAMERA_MODE_BALL, CAMERA_MODE_HEXAGON
+
 
 def main():
-    networktables.init(remote=False)
-    video()
 
-def video():
+    networktables.init()
 
     dashboard = networktables.get()
 
     dashboard.putBoolean(networktables.keys.vision_initialized, True)
 
-    cap = cv2.VideoCapture(config.video_source_number)
+    main_controller.connect()
 
+    cap = None
     while(True):
 
-        _, frame = cap.read()
+        if main_controller.enable_camera:
 
-        img = cube_tracker.process(frame,
-                                   logitech_c270)
+            if cap is None:
+                cap = cv2.VideoCapture(config.video_source_number)
 
-        cv2.imshow('frame', frame )
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
+            _, frame = cap.read()
 
-    cap.release()
+            if main_controller.camera_mode == CAMERA_MODE_RAW:
+
+                frame = cube_tracker.process(frame, logitech_c270)
+
+            cv2.imshow('frame', frame )
+
+        else:
+            # IDLE mode
+            time.sleep(.3)
+
+        # if cv2.waitKey(1) & 0xFF == ord('q'):
+        #     break
+
+    if cap is not None:
+        cap.release()
+
     cv2.destroyAllWindows()
+
 
 def single_frame(debug=False):
 

@@ -12,8 +12,7 @@ notified = [False]
 
 _dashboard = None
 
-# start networktables connection
-def init(remote=True):
+def init(client=True, host=None):
     global _dashboard
 
     # sub function to block anything from happening until
@@ -27,8 +26,8 @@ def init(remote=True):
             notified[0] = True
             cond.notify()
 
-    NetworkTables.initialize()
-    if remote is True or config.networktables_server_ip != '127.0.0.1':
+    if client is True or config.networktables_server_ip != '127.0.0.1':
+        NetworkTables.initialize(server=config.networktables_server_ip)
         NetworkTables.addConnectionListener(connectionListener, immediateNotify=True)
         with cond:
             print("Waiting for NetworkTables on %s" % config.networktables_server_ip)
@@ -36,6 +35,7 @@ def init(remote=True):
                 cond.wait()
 
     else:
+        NetworkTables.initialize()
         print('Starting local version of NetworkTables')
 
     print("SmartDashboard ready")
