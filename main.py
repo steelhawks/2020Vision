@@ -8,10 +8,13 @@ from processing import cube_tracker
 from controls import main_controller
 from controls import CAMERA_MODE_RAW, CAMERA_MODE_BALL, CAMERA_MODE_HEXAGON
 
+from web import tornado_server
 
 def main():
 
     networktables.init()
+
+    tornado_server.start()
 
     dashboard = networktables.get()
 
