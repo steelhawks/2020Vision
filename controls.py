@@ -7,11 +7,11 @@ CAMERA_MODE_HEXAGON = 'H'
 class Controls():
 
     def __init__(self):
-        self.enable_camera = False
+        self.enable_camera = True
         self.enable_processing = False
         self.camera_mode = CAMERA_MODE_RAW
 
-        self.enable_feed
+        self.enable_feed = True
         self.turn_camera_off = False
 
 
