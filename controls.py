@@ -1,19 +1,20 @@
 from network import controller_listener
 
-CAMERA_MODE_RAW = 'R'
-CAMERA_MODE_BALL = 'B'
-CAMERA_MODE_HEXAGON = 'H'
+CAMERA_MODE_RAW = 'RAW'
+CAMERA_MODE_CALIBRATE = 'CALIBRATE'
+CAMERA_MODE_BALL = 'BALL'
+CAMERA_MODE_HEXAGON = 'HEXAGON'
+
 
 class Controls():
 
     def __init__(self):
         self.enable_camera = True
         self.enable_processing = False
-        self.camera_mode = CAMERA_MODE_RAW
+        self.camera_mode = CAMERA_MODE_CALIBRATE
 
         self.enable_feed = True
         self.turn_camera_off = False
-
 
     def connect(self):
         controller_listener.connect(self)
