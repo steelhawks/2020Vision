@@ -8,12 +8,34 @@ new Vue({
         enable_camera: false,
         // enable_processing: false,
         camera_mode: 'R'
+    },
+    rgb: {
+        red: {
+            min: 0,
+            max: 255
+        },
+        green: {
+            min: 0,
+            max: 255
+        },
+        blue: {
+            min: 0,
+            max: 255
+        }
     }
   },
   mounted: function () {
     console.log('mounted');
   },
   methods: {
+
+    updateColors: function() {
+        var self = this;
+        console.log(self.rgb)
+        Socket.send({
+                'rgb': self.rgb
+        })
+    },
     enableCamera: function () {
         var self = this;
         if(self.controls.enable_camera == false){
@@ -26,23 +48,25 @@ new Vue({
     },
     enableRaw: function() {
         var self = this;
-        self.controls.camera_mode = 'R';
-        Socket.send(self.controls)
+        self.controls.camera_mode = 'RAW';
+        Socket.send({
+            'controls': self.controls
+        })
     },
     enableBall: function(){
         var self = this;
-        self.controls.camera_mode = 'B';
-        Socket.send(self.controls)
+        self.controls.camera_mode = 'BALL';
+        Socket.send({'controls':self.controls})
     },
     enableHex: function(){
         var self = this;
-        self.controls.camera_mode = 'H'
+        self.controls.camera_mode = 'HEXAGON'
         Socket.send(self.controls)
     },
     enableBay: function(){
         var self = this;
-        self.controls.camera_mode = 'L'
-        Socket.send(self.controls)
+        self.controls.camera_mode = 'BAY'
+        Socket.send({'controls':self.controls})
     }
     // enableProcessing: function(){
     //     var self = this;

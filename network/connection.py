@@ -25,8 +25,8 @@ def init(client=True, host=None):
         with cond:
             notified[0] = True
             cond.notify()
-
-    if client is True or config.networktables_server_ip != '127.0.0.1':
+            
+    if client is True:
         NetworkTables.initialize(server=config.networktables_server_ip)
         NetworkTables.addConnectionListener(connectionListener, immediateNotify=True)
         with cond:

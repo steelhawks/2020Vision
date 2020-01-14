@@ -32,20 +32,35 @@ class DashboardWebSocket(WebSocketHandler):
 
     def on_message(self, message):
 
-        controls = json.loads(message)
-
         dashboard = networktables.get()
-        dashboard.putBoolean(networktables.keys.vision_enable_camera, controls['enable_camera'])
+
+        inputs = json.loads(message)
+
+        data = None
+
+        logger.info(inputs)
+        if 'controls' in inputs:
+            controls = inputs['controls']
+            dashboard.putBoolean(networktables.keys.vision_enable_camera, controls['enable_camera'])
+            dashboard.putValue(networktables.keys.vision_camera_mode, controls['camera_mode'])
+            #
+            # data = dict(enable_camera=main_controller.enable_camera,
+            #             camera_mode=main_controller.camera_mode,
+            #             enable_processing=main_controller.enable_processing,
+            # )
+
+        elif 'rgb' in inputs:
+            rgb = inputs['rgb']
+            dashboard.putValue(networktables.keys.vision_color_profile, json.dumps(rgb))
+
+        # print(json.dumps(data))
+        # self.send_msg_threadsafe(json.dumps(data))
+
 
         # print(controls['enable_camera'])
         # main_controller.enable_camera = controls['enable_camera']
 
-        data = dict(enable_camera=main_controller.enable_camera,
-            camera_mode=main_controller.camera_mode,
-            enable_processing=main_controller.enable_processing)
 
-        print(json.dumps(data))
-        self.send_msg_threadsafe(json.dumps(data))
 
     def send_msg(self, msg):
         try:

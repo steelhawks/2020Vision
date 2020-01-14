@@ -78,12 +78,57 @@ background-image: radial-gradient( circle farthest-corner at 0.5% 97.2%,  #2fad5
 				  </label>
 				</div>
 				<div class="form-group">
-
 				  <label class="form-radio form-inline">
 					<input type="radio" name="gender"  @click="enableHex"><i class="form-icon"></i> HEX GOAL DETECT
 				  </label>
 				</div>
 			  </td>
+			</tr>
+
+		  	<tr>
+				<td>RGB Red Threshod</td>
+				<td>{{ rgb.red.min }} - {{ rgb.red.max }} </td>
+				<td>Min:
+					<input class="slider tooltip"
+						   v-model="rgb.red.min"
+						   @change="updateColors"
+						   type="range" min="0" max="255">
+					Max:
+					<input class="slider tooltip"
+						   v-model="rgb.red.max"
+						   @change="updateColors"
+						   type="range" min="0" max="255">
+				</td>
+			</tr>
+		  	<tr>
+				<td>RGB Green Threshod</td>
+				<td>{{ rgb.green.min }} - {{ rgb.green.max }} </td>
+				<td>Min:
+					<input class="slider"
+						   v-model="rgb.green.min"
+						   @change="updateColors"
+						   type="range" min="0" max="255">
+					Max:
+					<input class="slider"
+						   v-model="rgb.green.max"
+						   @change="updateColors"
+						   type="range" min="0" max="255">
+				</td>
+			</tr>
+		  	<tr>
+				<td>RGB Blue Threshod</td>
+				<td>{{ rgb.blue.min }} - {{ rgb.blue.max }} </td>
+				<td>Min:
+					<input class="slider"
+						   v-model="rgb.blue.min"
+						   @change="updateColors"
+						   type="range" min="0" max="255">
+					Max:
+					<input class="slider"
+						   v-model="rgb.blue.max"
+						   @change="updateColors"
+						   type="range" min="0" max="255">
+				</td>
 			</tr>
 		  </tbody>
 		</table>

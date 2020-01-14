@@ -1,8 +1,9 @@
 """
-Calibration constants for a portrait mode webcam
+Calibration constants for a webcam
 """
 
-FRAME_HEIGHT = 1024
-FRAME_WIDTH = 768
+FRAME_WIDTH = 640
+FRAME_HEIGHT = 480
+FPS = 120
 
-FOCAL_LENGTH = 1100
+FOCAL_LENGTH = 1170
