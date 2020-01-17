@@ -35,9 +35,14 @@ def find_vertices(contour):
     approx = cv2.approxPolyDP(contour, 0.04 * peri, True)
     return len(approx)
 
+
 def get_angle(camera, x, y):
+
     a = float(abs(camera.FRAME_WIDTH / 2 - x))
     b = float(camera.FRAME_HEIGHT - y)
+
+    if b == 0:
+        return 0
 
     radians = math.atan(a / b)
     angle = radians * 180 / math.pi

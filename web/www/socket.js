@@ -246,22 +246,46 @@ const Socket = new function () {
 	const protocol = loc.protocol === "https:" ? "wss:" : "ws:";
 	const address = `${protocol}//${loc.host}/dashboard/ws`;
 
-	function createSocket() {
+  this.onTargetUpdate = function(){
+  }
+
+	this.connect = function() {
+
+	    var self = this;
 
 		socket = new WebSocket(address);
 		if (socket) {
-
 			socket.onopen = function() {
-				console.info("Socket opened");
-
+				console.info("Socket opened at " + address);
 				socketOpen = true;
-
 				connectionListeners.forEach(f => f(true));
 			};
 
 			socket.onmessage = function(msg) {
 				const data = JSON.parse(msg.data);
-				console.log(data)
+//                console.log(data)
+                // data changed on websocket
+
+                if(data.hasOwnProperty('targets')){
+                    self.onTargetUpdate(data['targets'])
+                }
+                else{
+                    const key = data['k'];
+                    const value = data['v'];
+                    const isNew = data['n'];
+
+                    //ntCache.set(key, value);
+
+                    // notify global listeners
+                    //globalListeners.forEach(f => f(key, value, isNew));
+
+                    // notify key-specific listeners
+                    const listeners = keyListeners.get(key);
+                    if (listeners !== undefined) {
+                        listeners.forEach(f => f(key, value, isNew));
+                    }
+
+                }
 			};
 
 			socket.onclose = function() {
@@ -283,11 +307,11 @@ const Socket = new function () {
 				}
 
 				// respawn the websocket
-				setTimeout(createSocket, 300);
+				setTimeout(createSocket, 600);
 			};
 		}
 	}
-	createSocket();
+	this.connect()
 
 	return this;
 

@@ -12,8 +12,7 @@ from processing import bay_tracker
 from processing import port_tracker
 from processing import ball_tracker
 from controls import main_controller
-import _thread as thread
-import time
+
 
 from processing import filters
 
@@ -23,10 +22,8 @@ import gst_utils
 import logging
 
 import start_web
-import websocket
 from websocket import create_connection
-import ujson as json
-
+import json
 from cameras import Camera
 
 # initiate the top level logger
@@ -40,15 +37,17 @@ logging.basicConfig(
 
 logger = logging.getLogger('app')
 
-
 def main():
 
     networktables.init(client=False)
 
     dashboard = networktables.get()
+
     dashboard.putBoolean(networktables.keys.vision_initialized, True)
 
-    cap = cv2.VideoCapture(config.video_source_number)
+    main_controller.connect()
+
+    cap = cv2.VideoCapture('media/yellow_ball.mp4')
 
     # out_pipeline = gst_utils.get_udp_streamer_pipeline2(config.gstreamer_client_ip,
     #                                          config.gstreamer_client_port,
@@ -63,9 +62,9 @@ def main():
                     cap.get(cv2.CAP_PROP_FRAME_HEIGHT),
                     cap.get(cv2.CAP_PROP_FPS))
 
-    # print([camera.FRAME_WIDTH])
-    # print([camera.FRAME_HEIGHT])
-    # print([camera.FPS])
+    print([camera.FRAME_WIDTH])
+    print([camera.FRAME_HEIGHT])
+    print([camera.FPS])
 
     out = cv2.VideoWriter(out_pipeline, 0,
                           camera.FPS,
@@ -74,45 +73,8 @@ def main():
 
     #TODO: if no camera, exit and msg no camera
     time.sleep(5)
-
-
-    #websocket.enableTrace(True)
-
-    def update_controls(ws, message):
-        logger.info(message)
-
-    def ws_closed(ws):
-        logger.info('closed socket')
-
-    def on_error(ws, error):
-        print(error)
-
-    # tracking_ws = create_connection("wss://localhost:8080/tracking/ws/")
-    #
-
-    def on_open(ws):
-        def run(*args):
-            for i in range(3):
-                time.sleep(1)
-                ws.send("Hello %d" % i)
-            time.sleep(1)
-            ws.close()
-            print("thread terminating...")
-        thread.start_new_thread(run, ())
-
-    tracking_ws = create_connection("ws://localhost:8080/tracking/ws")
-
-    def start_dashboard_socket(*args):
-        dashboard_ws = websocket.WebSocketApp("ws://localhost:8080/dashboard/ws",
-            on_message = update_controls,
-            on_close=ws_closed,
-            on_error = on_error)
-        dashboard.on_open = on_open
-        dashboard_ws.run_forever()
-
-    thread.start_new_thread(start_dashboard_socket, ())
-
-    logger.info('starting main loop ')
+    logger.info('starting main loop')
+    ws = create_connection("ws://localhost:8080/tracking/ws")
 
     frame_cnt = 0
     while(True):
@@ -127,17 +89,22 @@ def main():
 
             _, frame = cap.read()
 
+            if frame is None:
+                cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
+                frame_cnt = 0
+                continue
+
             #frame = filters.resize(frame, camera.FRAME_WIDTH, camera.FRAME_HEIGHT)
 
             if main_controller.camera_mode == CAMERA_MODE_RAW:
 
                 frame = frame
 
-            # elif main_controller.camera_mode == CAMERA_MODE_LOADING_BAY:
-            #
-            #     frame = bay_tracker.process(frame,
-            #                                 generic,
-            #                                 color_profiles.ReflectiveProfile())
+            elif main_controller.camera_mode == CAMERA_MODE_LOADING_BAY:
+
+                frame = bay_tracker.process(frame,
+                                            generic,
+                                            color_profiles.ReflectiveProfile())
 
             elif main_controller.camera_mode == CAMERA_MODE_BALL:
 
@@ -145,7 +112,7 @@ def main():
                                                             camera,
                                                             frame_cnt)
 
-                tracking_ws.send(json.dumps(dict(targets=tracking_data)))
+                ws.send(json.dumps(dict(targets=tracking_data)))
 
             elif main_controller.camera_mode == CAMERA_MODE_HEXAGON:
 
@@ -153,6 +120,8 @@ def main():
 
 
             if main_controller.enable_streaming:
+                # always output to 640x480
+
                 cv2.putText(frame,
                             'Tracking Mode %s' % main_controller.camera_mode,
                             (10,10),
@@ -163,7 +132,7 @@ def main():
                             cv2.LINE_AA)
 
 
-                out.write(frame)
+                #out.write(frame)
 
             #cv2.imshow('frame', frame )
             #v2.waitKey(1)

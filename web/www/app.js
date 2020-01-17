@@ -9,32 +9,27 @@ new Vue({
         // enable_processing: false,
         camera_mode: 'R'
     },
-    rgb: {
-        red: {
-            min: 0,
-            max: 255
-        },
-        green: {
-            min: 0,
-            max: 255
-        },
-        blue: {
-            min: 0,
-            max: 255
-        }
-    }
+    targets: [],
+    color_profile: null
   },
   mounted: function () {
     console.log('mounted');
+    var self = this;
   },
   methods: {
-
+    onTargetUpdate: function(key, value, isNew) {
+        //console.log(value);
+        this.targets = value
+    },
     updateColors: function() {
         var self = this;
         console.log(self.rgb)
         Socket.send({
-                'rgb': self.rgb
-        })
+            'profile':{
+                'rgb': self.rgb,
+                'hsv': self.hsv,
+                'hsl': self.hsl
+        }})
     },
     enableCamera: function () {
         var self = this;
@@ -49,9 +44,8 @@ new Vue({
     enableRaw: function() {
         var self = this;
         self.controls.camera_mode = 'RAW';
-        Socket.send({
-            'controls': self.controls
-        })
+        Socket.send({'controls':self.controls})
+
     },
     enableBall: function(){
         var self = this;
@@ -61,7 +55,7 @@ new Vue({
     enableHex: function(){
         var self = this;
         self.controls.camera_mode = 'HEXAGON'
-        Socket.send(self.controls)
+        Socket.send({'controls':self.controls})
     },
     enableBay: function(){
         var self = this;
@@ -78,6 +72,6 @@ new Vue({
     //     }
     //     Socket.send(self.controls)
     // },
-    
+
   }
 });

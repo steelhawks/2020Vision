@@ -10,7 +10,7 @@
 	<style>
 		.cosmic {
 			height:100vh;
-		
+
 background-image: radial-gradient( circle farthest-corner at 0.5% 97.2%,  #2fad5b 0%, #93c4ff 100.2% );
 		}
 </style>
@@ -84,48 +84,49 @@ background-image: radial-gradient( circle farthest-corner at 0.5% 97.2%,  #2fad5
 				</div>
 			  </td>
 			</tr>
-
+		  </tbody>
+		<tbody  v-if="color_profile">
 		  	<tr>
 				<td>RGB Red Threshod</td>
-				<td>{{ rgb.red.min }} - {{ rgb.red.max }} </td>
+				<td>{{ color_profile.rgb.red.min }} - {{ color_profile.rgb.red.max }} </td>
 				<td>Min:
 					<input class="slider tooltip"
-						   v-model="rgb.red.min"
+						   v-model="color_profile.rgb.red.min"
 						   @change="updateColors"
 						   type="range" min="0" max="255">
 					Max:
 					<input class="slider tooltip"
-						   v-model="rgb.red.max"
+						   v-model="color_profile.rgb.red.max"
 						   @change="updateColors"
 						   type="range" min="0" max="255">
 				</td>
 			</tr>
 		  	<tr>
 				<td>RGB Green Threshod</td>
-				<td>{{ rgb.green.min }} - {{ rgb.green.max }} </td>
+				<td>{{ color_profile.rgb.green.min }} - {{ color_profile.rgb.green.max }} </td>
 				<td>Min:
 					<input class="slider"
-						   v-model="rgb.green.min"
+						   v-model="color_profile.rgb.green.min"
 						   @change="updateColors"
 						   type="range" min="0" max="255">
 					Max:
 					<input class="slider"
-						   v-model="rgb.green.max"
+						   v-model="color_profile.rgb.green.max"
 						   @change="updateColors"
 						   type="range" min="0" max="255">
 				</td>
 			</tr>
 		  	<tr>
 				<td>RGB Blue Threshod</td>
-				<td>{{ rgb.blue.min }} - {{ rgb.blue.max }} </td>
+				<td>{{ color_profile.rgb.blue.min }} - {{ color_profile.rgb.blue.max }} </td>
 				<td>Min:
 					<input class="slider"
-						   v-model="rgb.blue.min"
+						   v-model="color_profile.rgb.blue.min"
 						   @change="updateColors"
 						   type="range" min="0" max="255">
 					Max:
 					<input class="slider"
-						   v-model="rgb.blue.max"
+						   v-model="color_profile.rgb.blue.max"
 						   @change="updateColors"
 						   type="range" min="0" max="255">
 				</td>
@@ -139,13 +140,18 @@ background-image: radial-gradient( circle farthest-corner at 0.5% 97.2%,  #2fad5
 
 	</script>
 
+	<canvas id="canvas"
+			width="960"
+			height="540"
+			style="border:1px solid black"></canvas>
+
 	<div id="app"></div>
 
 </div>
 
 	<script src="/socket.js"></script>
 	<script src="/app.js"></script>
-
+	<script src="/tracker.js"></script>
 </body>
 
 </html> 
