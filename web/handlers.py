@@ -1,22 +1,23 @@
 from os.path import abspath, dirname, join
 
+import uuid
+import logging
+import time
 import json
+import json as json_encode
+
 from tornado.ioloop import IOLoop
 from tornado.web import StaticFileHandler
 from tornado.websocket import WebSocketHandler, WebSocketClosedError
 
-import logging
-import time
-
-import uuid
 import network as networktables
-
 from controls import main_controller
+from profiles.color_profile import ColorProfileEncoder
 from .nt_serial import NTSerial
 
 logger = logging.getLogger("handlers")
 
-import ujson as json
+USE_NT_TABLES = False
 
 class ObjectTrackingWebSocket(WebSocketHandler):
     """
@@ -71,9 +72,12 @@ class DashboardWebSocket(WebSocketHandler):
         dashboard = networktables.get()
 
         ### add listener network tables updates and send back to socket
-        self.ntserial = NTSerial(self.send_msg_threadsafe)
-        self.write_message(self.uid)
-        self.write_message(dashboard.getValue(networktables.keys.vision_color_profile,{}))
+        if USE_NT_TABLES:
+            self.ntserial = NTSerial(self.send_msg_threadsafe)
+
+        self.write_message(json_encode.dumps(dict(socket=self.uid,
+                                                  color_profiles=self.application.settings['color_profiles']),
+                                              cls=ColorProfileEncoder))
 
     def check_origin(self, origin):
         """
@@ -82,25 +86,53 @@ class DashboardWebSocket(WebSocketHandler):
         return True
 
     def on_message(self, message):
-        dashboard = networktables.get()
-        logger.info(message)
-        if message == 'status':
-            dashboard.getValue(networktables.keys.vision_color_profile, {})
-        else:
-            inputs = json.loads(message)
+        if USE_NT_TABLES:
+            dashboard = networktables.get()
 
-            if 'controls' in inputs:
-                controls = inputs['controls']
+        logger.info(message)
+        inputs = json.loads(message)
+
+        if 'controls' in inputs:
+            controls = inputs['controls']
+            if USE_NT_TABLES:
                 dashboard.putBoolean(networktables.keys.vision_enable_camera, controls['enable_camera'])
                 dashboard.putValue(networktables.keys.vision_camera_mode, controls['camera_mode'])
 
-            elif 'color_profile' in inputs:
-                profile = inputs['color_profile']
+        elif 'color_profile' in inputs:
+            profile = inputs['color_profile']
+            if USE_NT_TABLES:
                 dashboard.putValue(networktables.keys.vision_color_profile, json.dumps(profile))
 
-            logger.info('broadcasting to %s' % len(DashboardWebSocket.watchers))
-            for watcher in DashboardWebSocket.watchers:
-                watcher.write_message(message)
+            color_profile = self.application.settings['color_profiles'].get(profile['camera_mode'])
+            logger.info('updating color profile for %s' % color_profile.camera_mode)
+
+
+            color_profile.red.min = int(profile['rgb']['r']['min'])
+            color_profile.red.max = int(profile['rgb']['r']['max'])
+
+            color_profile.green.min = int(profile['rgb']['g']['min'])
+            color_profile.green.max = int(profile['rgb']['g']['max'])
+
+            color_profile.blue.min = int(profile['rgb']['b']['min'])
+            color_profile.blue.max = int(profile['rgb']['b']['max'])
+
+            color_profile.hsv_hue.min = int(profile['hsv']['h']['min'])
+            color_profile.hsv_hue.max = int(profile['hsv']['h']['max'])
+
+            color_profile.hsv_sat.min = int(profile['hsv']['s']['min'])
+            color_profile.hsv_sat.max = int(profile['hsv']['s']['max'])
+
+            color_profile.hsv_val.min = int(profile['hsv']['v']['min'])
+            color_profile.hsv_val.max = int(profile['hsv']['v']['max'])
+
+            #
+            # color_profile.update(rgb=color_profile['rgb'],
+            #                     hsl=color_profile['hsl'],
+            #                     hsv=color_profile['hsv'])
+
+        logger.info('broadcasting to %s' % len(DashboardWebSocket.watchers))
+        for watcher in DashboardWebSocket.watchers:
+            watcher.write_message(message)
 
     def send_msg(self, msg):
         try:

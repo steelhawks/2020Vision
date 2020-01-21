@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8"/>
+  	<link rel="stylesheet" href="/spectre.min.css">
+  	<link rel="stylesheet" href="/spectre-exp.min.css">
+  	<link rel="stylesheet" href="/spectre-icons.min.css">
+
+    <script src="/vue.js"></script>
+    <script src="/jquery-3.1.1.min.js"></script>
+    <title>Tornado Image Streamer</title>
+</head>
+
+<body>
+
+
+<script type="text/x-template" id="main-template">
+  <div>
+
+    <ul class="tab tab-block">
+      <li class="tab-item" :class="{active: selected_profile == color_profile}" v-for="(color_profile, camera_mode) in color_profiles">
+        <a @click="changeProfile(color_profile)" href="#">{{ camera_mode }}</a>
+      </li>
+    </ul>
+
+    <div v-if="selected_profile">
+      <ul class="tab tab-block">
+        <li class="tab-item" :class="{active: color_mode == selected_color_mode}"  v-for="color_mode in color_modes">
+          <a @click="changeColorMode(color_mode)" href="#">{{ color_mode }}</a>
+        </li>
+      </ul>
+
+      <br/>
+
+      <!-- form switch control -->
+      <div class="form-group">
+        <label class="form-switch">
+          <input @change="changeApplyMask" v-model="apply_mask" type="checkbox">
+          <i class="form-icon"></i> Apply Mask
+        </label>
+      </div>
+
+      <ul class="breadcrumb">
+        <li v-if="selected_profile" class="breadcrumb-item">
+          <a href="#">{{ selected_profile.camera_mode }}</a>
+        </li>
+        <li v-if="selected_profile"  class="breadcrumb-item">
+          <a href="#">{{ selected_color_mode }}</a>
+        </li>
+      </ul>
+
+
+      <table style="width:100%" >
+        <tbody>
+  		  	<tr v-for="value in values">
+            <td>{{ value.name }}</td>
+    				<td>{{ value.range.min }} - {{ value.range.max }} </td>
+    				<td>Min:
+    					<input class="slider tooltip"
+    						   v-model="value.range.min"
+    						   @change="updateColors"
+    						   type="range" min="0" max="255">
+    					Max:
+    					<input class="slider tooltip"
+    						   v-model="value.range.max"
+    						   @change="updateColors"
+    						   type="range" min="0" max="255">
+    				</td>
+			     </tr>
+        </tbody>
+      </table>
+    </div>
+    </div>
+  </div>
+</script>
+
+Actual: <span id="actual"></span>
+<br/>
+
+<div class="container">
+  <div class="columns">
+    <div class="column col-1"></div>
+    <div class="column col-5">
+      <img id="image" src=""/>
+    </div>
+    <div class="column col-5">
+      <div id="app"></div>
+    </div>
+  </div>
+</div>
+
+<script src="/ws_streamer.js"></script>
+
+</body>
+</html>

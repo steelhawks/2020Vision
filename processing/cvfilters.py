@@ -11,9 +11,9 @@ def median_filter(input, blur=5):
 
 
 def hsl_threshold(input,profile):
-    hue = profile.hue
-    sat = profile.sat
-    lum = profile.lum
+    hue = profile.hsl_hue
+    sat = profile.hsl_sat
+    lum = profile.hsl_lum
 
     out = cv2.cvtColor(input, cv2.COLOR_BGR2HLS)
     return cv2.inRange(out, (hue.min, lum.min, sat.min),  (hue.max, lum.max, sat.max))
@@ -30,9 +30,10 @@ def hsv_threshold(input,profile):
 
 def rgb_threshold(input, profile):
     rgb = cv2.cvtColor(input, cv2.COLOR_BGR2RGB)
-    return cv2.inRange(rgb,
+    mask = cv2.inRange(rgb,
                        (profile.red.min, profile.green.min, profile.blue.min),
                        (profile.red.max, profile.green.max, profile.blue.max))
+    return mask
 
 def grayscale(input):
     """
