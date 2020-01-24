@@ -15,6 +15,8 @@ from controls import main_controller
 from profiles.color_profile import ColorProfileEncoder
 from .nt_serial import NTSerial
 
+root_path = abspath(join(dirname(__file__),"../"))
+
 logger = logging.getLogger("handlers")
 
 USE_NT_TABLES = False
@@ -75,9 +77,12 @@ class DashboardWebSocket(WebSocketHandler):
         if USE_NT_TABLES:
             self.ntserial = NTSerial(self.send_msg_threadsafe)
 
+        camera = dict(width=self.application.settings['camera'].WIDTH, height=self.application.settings['camera'].HEIGHT)
+        logger.info(camera)
         self.write_message(json_encode.dumps(dict(socket=self.uid,
+                                                  camera=camera,
                                                   color_profiles=self.application.settings['color_profiles']),
-                                              cls=ColorProfileEncoder))
+                                                  cls=ColorProfileEncoder))
 
     def check_origin(self, origin):
         """
@@ -99,13 +104,24 @@ class DashboardWebSocket(WebSocketHandler):
                 dashboard.putValue(networktables.keys.vision_camera_mode, controls['camera_mode'])
 
         elif 'color_profile' in inputs:
+
             profile = inputs['color_profile']
+
+            if 'reset' in inputs:
+                file_name  = 'color_profile_%s.json' % (profile['camera_mode'])
+                filepath = join(root_path, 'profiles', file_name)
+                logger.info('loading profile from %s' % filepath)
+                try:
+                    with open(filepath, mode='rb') as f:
+                        profile = json.loads(f.read())
+                except:
+                    logger.error('missing file %s' % filepath )
+
             if USE_NT_TABLES:
                 dashboard.putValue(networktables.keys.vision_color_profile, json.dumps(profile))
 
             color_profile = self.application.settings['color_profiles'].get(profile['camera_mode'])
             logger.info('updating color profile for %s' % color_profile.camera_mode)
-
 
             color_profile.red.min = int(profile['rgb']['r']['min'])
             color_profile.red.max = int(profile['rgb']['r']['max'])
@@ -125,10 +141,27 @@ class DashboardWebSocket(WebSocketHandler):
             color_profile.hsv_val.min = int(profile['hsv']['v']['min'])
             color_profile.hsv_val.max = int(profile['hsv']['v']['max'])
 
-            #
-            # color_profile.update(rgb=color_profile['rgb'],
-            #                     hsl=color_profile['hsl'],
-            #                     hsv=color_profile['hsv'])
+            color_profile.hsl_hue.min = int(profile['hsl']['h']['min'])
+            color_profile.hsl_hue.max = int(profile['hsl']['h']['max'])
+
+            color_profile.hsl_sat.min = int(profile['hsl']['s']['min'])
+            color_profile.hsl_sat.max = int(profile['hsl']['s']['max'])
+
+            color_profile.hsl_lum.min = int(profile['hsl']['l']['min'])
+            color_profile.hsl_lum.max = int(profile['hsl']['l']['max'])
+
+            if 'reset' in inputs:
+                self.write_message(json_encode.dumps(dict(socket=self.uid,
+                                                      color_profiles=self.application.settings['color_profiles']),
+                                                      cls=ColorProfileEncoder))
+
+            if 'save' in inputs:
+                file_name  = 'color_profile_%s.json' % (profile['camera_mode'])
+                filepath = join(root_path, 'profiles', file_name)
+                logger.info('writing profile to %s' % filepath)
+                with open(filepath, mode='w') as f:
+                    json.dump(profile, f, indent=4)
+
 
         logger.info('broadcasting to %s' % len(DashboardWebSocket.watchers))
         for watcher in DashboardWebSocket.watchers:

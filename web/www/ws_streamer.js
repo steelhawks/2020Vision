@@ -10,6 +10,47 @@ function new_web_socket(uri_path) {
   return ws;
 }
 
+
+var start_camera_stream = function() {
+
+  time_0 = (new Date()).getTime();
+  counter = 0;
+
+  update_fps = function() {
+      counter += 1;
+      if ((counter % 5) == 0) {
+          tdif = (new Date()).getTime() - time_0;
+          time_0 = (new Date()).getTime();
+          fps = Math.round(5 * 1.0 / (tdif / 1000.0));
+          $('#actual').text(fps);
+      }
+  }
+
+  ws_imagestream = new_web_socket('/camera/ws');
+
+  ws_imagestream.onmessage = function(e) {
+      if (e.data instanceof Blob) {
+          update_fps()
+          image.src = URL.createObjectURL(e.data);
+          image.onload = function() {
+              URL.revokeObjectURL(image.src);
+          }
+      }
+      if (window.stream_mode == "get") {
+          setTimeout(function(){ws_imagestream.send('?')}, interval);
+      }
+  }
+
+  ws_imagestream.onopen = function() {
+      console.log('connected ws_imagestream...');
+      ws_imagestream.send('?');
+  };
+  ws_imagestream.onclose = function() {
+      console.log('closed ws_imagestream');
+  };
+  //ws_imagestream.send('?');
+};
+
 new Vue({
   el: '#app',
   template: '#main-template',
@@ -87,8 +128,14 @@ new Vue({
       console.log(data);
       if(data.hasOwnProperty('color_profiles')){
         self.color_profiles = data.color_profiles;
+        if( self.selected_profile) {
+          self.selected_profile = self.color_profiles[self.selected_profile.camera_mode]
+        }
       }
+      //self.$forceUpdate();
     }
+    start_camera_stream();
+
   },
   methods: {
     changeProfile: function(profile) {
@@ -112,48 +159,16 @@ new Vue({
         var self = this;
         console.log(self.color_profiles)
         self.controls_ws.send(JSON.stringify({'color_profile': self.selected_profile}))
+    },
+    saveProfile: function() {
+        var self = this;
+        self.controls_ws.send(JSON.stringify({'color_profile': self.selected_profile,
+                                              'save': true}))
+    },
+    resetProfile: function() {
+        var self = this;
+        self.controls_ws.send(JSON.stringify({'color_profile': self.selected_profile,
+                                              'reset': true}))
     }
   }
-});
-
-$(document).ready(function() {
-
-  time_0 = (new Date()).getTime();
-  counter = 0;
-
-  update_fps = function() {
-      counter += 1;
-      if ((counter % 5) == 0) {
-          tdif = (new Date()).getTime() - time_0;
-          time_0 = (new Date()).getTime();
-          fps = Math.round(5 * 1.0 / (tdif / 1000.0));
-          $('#actual').text(fps);
-      }
-  }
-
-
-
-  ws_imagestream = new_web_socket('/camera/ws');
-
-  ws_imagestream.onmessage = function(e) {
-      if (e.data instanceof Blob) {
-          update_fps()
-          image.src = URL.createObjectURL(e.data);
-          image.onload = function() {
-              URL.revokeObjectURL(image.src);
-          }
-      }
-      if (window.stream_mode == "get") {
-          setTimeout(function(){ws_imagestream.send('?')}, interval);
-      }
-  }
-
-  ws_imagestream.onopen = function() {
-      console.log('connected ws_imagestream...');
-      ws_imagestream.send('?');
-  };
-  ws_imagestream.onclose = function() {
-      console.log('closed ws_imagestream');
-  };
-  ws_imagestream.send('?');
 });

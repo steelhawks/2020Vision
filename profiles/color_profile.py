@@ -56,8 +56,8 @@ class ColorProfile:
                     max=self.hsv_hue.max),
             s=dict(min=self.hsv_sat.min,
                     max=self.hsv_sat.max),
-            v=dict(min=self.hsv_hue.min,
-                    max=self.hsv_hue.max)
+            v=dict(min=self.hsv_val.min,
+                    max=self.hsv_val.max)
         )
 
         return dict(camera_mode=self.camera_mode,
