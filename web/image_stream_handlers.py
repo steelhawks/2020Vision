@@ -34,6 +34,42 @@ def convert_to_jpg(image):
     im.save(mem_file, 'JPEG')
     return mem_file.getvalue()
 
+class CameraFeedHandler(tornado.websocket.WebSocketHandler):
+    """
+    """
+    watchers = set()
+    def open(self):
+        self.uid = str(uuid.uuid4())
+        logger.info("CameraFeedHandler websocket opened %s" % self.uid)
+        CameraFeedHandler.watchers.add(self)
+
+    def check_origin(self, origin):
+        """
+            Allow CORS requests
+        """
+        return True
+
+    """
+    broadcast to clients, assumes its target data
+    """
+    def on_message(self, message):
+        # logger.info('pushing image')
+        for waiter in CameraFeedHandler.watchers:
+            if waiter == self:
+                continue
+            waiter.write_message(message, binary=True)
+
+    def send_msg(self, msg):
+        try:
+            self.write_message(msg, False)
+        except WebSocketClosedError:
+            logger.warn("websocket closed when sending message")
+
+    def on_close(self):
+        logger.info("image websocket closed %s" % self.uid)
+        CameraFeedHandler.watchers.remove(self)
+
+
 class ImageStreamHandler(tornado.websocket.WebSocketHandler):
     """TBW."""
 

@@ -9,37 +9,17 @@ new Vue({
         // enable_processing: false,
         camera_mode: 'R'
     },
-    targets: [],
-    color_profile: null
+    targets: []
   },
   mounted: function () {
     console.log('mounted');
     var self = this;
+    start_camera_stream("/processed/ws", "processed_image");
   },
   methods: {
     onTargetUpdate: function(key, value, isNew) {
         //console.log(value);
         this.targets = value
-    },
-    updateColors: function() {
-        var self = this;
-        console.log(self.rgb)
-        Socket.send({
-            'profile':{
-                'rgb': self.rgb,
-                'hsv': self.hsv,
-                'hsl': self.hsl
-        }})
-    },
-    enableCamera: function () {
-        var self = this;
-        if(self.controls.enable_camera == false){
-            self.controls.enable_camera = true;
-        }
-        else{
-            self.controls.enable_camera = false;
-        }
-        Socket.send(self.controls)
     },
     enableRaw: function() {
         var self = this;
