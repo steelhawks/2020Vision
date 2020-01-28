@@ -16,7 +16,6 @@ from profiles.color_profile import ColorProfileEncoder
 from .nt_serial import NTSerial
 
 logger = logging.getLogger("handlers")
-
 USE_NT_TABLES = False
 
 class ObjectTrackingWebSocket(WebSocketHandler):
@@ -94,8 +93,13 @@ class DashboardWebSocket(WebSocketHandler):
 
         if 'controls' in inputs:
             controls = inputs['controls']
+            main_controller.enable_camera = controls['enable_camera']
+            main_controller.camera_mode = controls['camera_mode']
+            main_controller.enable_calibrate = controls['']
+            logger.info(main_controller.camera_mode)
+
             if USE_NT_TABLES:
-                dashboard.putBoolean(networktables.keys.vision_enable_camera, controls['enable_camera'])
+                dashboard.putValue(networktables.keys.vision_enable_camera, controls['enable_camera'])
                 dashboard.putValue(networktables.keys.vision_camera_mode, controls['camera_mode'])
 
         elif 'color_profile' in inputs:
@@ -147,7 +151,6 @@ class DashboardWebSocket(WebSocketHandler):
     def on_close(self):
         logger.info("Dashboard websocket closed %s" % self.uid)
         DashboardWebSocket.watchers.remove(self)
-
 
 class NonCachingStaticFileHandler(StaticFileHandler):
     """

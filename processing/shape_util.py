@@ -51,3 +51,6 @@ def get_angle(camera, x, y):
 
 def get_distance(width_pixel, width_actual, focal_length):
     return focal_length * width_actual / width_pixel
+
+def distance_in_inches(width_pixel):
+    return 762 * width_pixel ** -0.8

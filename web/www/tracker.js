@@ -34,13 +34,28 @@ function draw(targets) {
 
     var octx = offscreenCanvas.getContext("2d");
     targets.forEach(function(target){
-        octx.beginPath();
-        octx.arc(target.xpos, target.ypos, target.radius, 0, Math.PI*2);
-        octx.fillStyle = "#0095DD";
-        octx.fill();
-        octx.closePath();
-    })
-
+      octx.fillStyle = "#0095DD";
+      if(target.shape == 'BALL'){
+          octx.beginPath();
+          octx.arc(target.xpos, target.ypos, target.radius, 0, Math.PI*2);
+          octx.fill();
+          octx.closePath();
+      }
+      if(target.shape == 'BAY'){
+          octx.strokeRect(target.xpos,target.ypos, target.width, target.width * 11/7);
+          octx.fillRect(target.xpos,target.ypos, target.width, target.width * 11/7);
+      }
+      if(target.shape =='PORT'){
+          x = target.xpos;
+          y = target.ypos;
+          size = target.width;
+          octx.beginPath();
+          octx.moveTo(x + size * Math.cos(0), y + size * Math.sin(0));
+          for (side; side < 7; side++) {
+              octx.lineTo(x + size * Math.cos(side * 2 * Math.PI / 6), y + size * Math.sin(side * 2 * Math.PI / 6));
+          }
+      }
+  })
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.drawImage(offscreenCanvas, 0, 0);
     showFPS()

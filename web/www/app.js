@@ -7,7 +7,7 @@ new Vue({
     controls: {
         enable_camera: false,
         // enable_processing: false,
-        camera_mode: 'R'
+        camera_mode: 'BAY'
     },
     targets: [],
     color_profile: null
@@ -60,6 +60,11 @@ new Vue({
     enableBay: function(){
         var self = this;
         self.controls.camera_mode = 'BAY'
+        Socket.send({'controls':self.controls})
+    },
+    enableCalibrate: function(){
+        var self = this;
+        self.controls.camera_mode = 'CALIBRATE'
         Socket.send({'controls':self.controls})
     }
     // enableProcessing: function(){

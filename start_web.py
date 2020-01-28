@@ -17,6 +17,7 @@ logger = logging.getLogger('app')
 def main():
 
     tornado_server.start()
+    print("starting server")
 
 if __name__ == '__main__':
     main()

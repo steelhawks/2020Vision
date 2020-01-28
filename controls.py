@@ -12,8 +12,7 @@ class Controls():
         self.enable_camera = True
         self.enable_processing = False
         self.enable_streaming = True
-        self.camera_mode = CAMERA_MODE_CALIBRATE
-
+        self.camera_mode = CAMERA_MODE_BALL
         self.enable_feed = True
         self.turn_camera_off = False
 
