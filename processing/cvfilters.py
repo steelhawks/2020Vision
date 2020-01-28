@@ -24,7 +24,7 @@ def hsv_threshold(input,profile):
     sat = profile.hsv_sat
     val = profile.hsv_val
 
-    out = cv2.cvtColor(input, cv2.COLOR_BGR2HSV)
+    out = cv2.cvtColor(input, cv2.COLOR_RGB2HSV)
     return cv2.inRange(out, (hue.min, sat.min, val.min),  (hue.max, sat.max, val.max))
 
 
