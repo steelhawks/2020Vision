@@ -2,57 +2,32 @@
 OpenCV Constants for filters
 
 """
+from profiles import color_profile
 
+BALL_COLOR_PROFILE = color_profile.ColorProfile("BALL")
 
-class ReflectiveProfile:
-    # RGB thresholds
-    red = [95, 255]
-    green = [158, 255.0]
-    blue = [150, 255]
+BALL_COLOR_PROFILE.hsv_hue.min = 50
+BALL_COLOR_PROFILE.hsv_hue.max = 255
+BALL_COLOR_PROFILE.hsv_sat.min = 0
+BALL_COLOR_PROFILE.hsv_sat.max = 255
+BALL_COLOR_PROFILE.hsv_val.min = 50
+BALL_COLOR_PROFILE.hsv_val.max = 205
 
-    # HSL thresholds
-    hsl_hue = [22.66187050359712, 180.0]
-    hsl_sat = [48.1564748201439, 255.0]
-    hsl_lum = [61.915467625899275, 255.0]
+PORT_COLOR_PROFILE = color_profile.ColorProfile("PORT")
 
-    # HSV thresholds
-    # hsv_hue = [0, 38]
-    # hsv_sat = [78,255]
-    # hsv_val = [64,255]
-    
-    hsv_hue = [0, 180]
-    hsv_sat = [0, 255]
-    hsv_val = [250, 255]
+PORT_COLOR_PROFILE.hsv_hue.min = 10
+PORT_COLOR_PROFILE.hsv_hue.max = 30
+PORT_COLOR_PROFILE.hsv_sat.min = 124
+PORT_COLOR_PROFILE.hsv_sat.max = 255
+PORT_COLOR_PROFILE.hsv_val.min = 138
+PORT_COLOR_PROFILE.hsv_val.max = 255
 
+BAY_COLOR_PROFILE = color_profile.ColorProfile('BAY')
 
-class BallProfile:
+BAY_COLOR_PROFILE.hsv_hue.min = 0
+BAY_COLOR_PROFILE.hsv_hue.max = 164
+BAY_COLOR_PROFILE.hsv_sat.min = 86
+BAY_COLOR_PROFILE.hsv_sat.max = 255
+BAY_COLOR_PROFILE.hsv_val.min = 197
+BAY_COLOR_PROFILE.hsv_val.max = 255
 
-    """
-    * 2020 Ballprofile Settings
-    * Due to limelight coloration one issue may be configuring the rgb and hsv values...
-    * Hali and Nick :)
-    """
-
-    # red = [86, 255]
-    # green = [120, 255]
-    # blue = [0, 100]
-    red = [94, 255]
-    green = [120, 255]
-    blue = [23, 255]
-
-    # HSL thresholds
-    hsl_hue = [22.66187050359712, 180.0]
-    hsl_sat = [48.1564748201439, 255.0]
-    hsl_lum = [61.915467625899275, 255.0]
-
-    # HSV thresholds
-    # hsv_hue = [0, 38]
-    # hsv_sat = [78,255]
-    # hsv_val = [64,255]
-    # hsv_hue = [20, 60]
-    # hsv_sat = [70, 255]
-    # hsv_val = [40, 255]
-    hsv_hue = [20, 62]
-    hsv_sat = [66, 186]
-    hsv_val = [107, 255]
-    

@@ -1,6 +1,6 @@
 import config
 
-config.networktables_server_ip = '127.0.0.1'
+config.networktables_server_ip = '10.26.1.2'
 
 # when using static ip for robot
 #config.networktables_server_ip = '10.26.1.11'

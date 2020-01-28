@@ -14,7 +14,7 @@ from cameras import image_converter
 from profiles import color_profiles
 from processing import bay_tracker
 from processing import port_tracker
-from processing import ball_tracker
+from processing import ball_tracker2
 from processing import color_calibrate
 
 
@@ -54,10 +54,14 @@ logger = logging.getLogger('app')
 
 def main():
 
+    cv2.destroyAllWindows()
+
     networktables.init(client=False)
 
     dashboard = networktables.get()
     dashboard.putBoolean(networktables.keys.vision_initialized, True)
+
+    cv2.destroyAllWindows()
 
     cap = cv2.VideoCapture(config.video_source_number)
 
@@ -71,6 +75,13 @@ def main():
         #                                          config.gstreamer_client_port,
         #                                          config.gstreamer_bitrate)
 
+    # Set camera properties
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+    cap.set(cv2.CAP_PROP_FPS, 120)
+    cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0.25)
+    cap.set(cv2.CAP_PROP_EXPOSURE, 0.02)
+    cap.set(cv2.CAP_PROP_CONTRAST, 0.0)
 
         out = cv2.VideoWriter(out_pipeline, 0,
                               camera.FPS,
@@ -121,11 +132,11 @@ def main():
 
                 frame = frame
 
-            # elif main_controller.camera_mode == CAMERA_MODE_LOADING_BAY:
-            #
-            #     frame = bay_tracker.process(frame,
-            #                                 generic,
-            #                                 color_profiles.ReflectiveProfile())
+            elif main_controller.camera_mode == CAMERA_MODE_LOADING_BAY:
+            
+                frame, tracking_data = bay_tracker.process(frame, generic)
+                dashboard.putStringArray(networktables.keys.vision_target_data, tracking_data)
+                tracking_ws.send(json.dumps(dict(targets=tracking_data)))
 
             elif main_controller.camera_mode == CAMERA_MODE_BALL:
 
@@ -177,19 +188,19 @@ def main():
                 # if out is not None:
                 #     out.write(frame)
 
-            #cv2.imshow('frame', frame )
-            #v2.waitKey(1)
+            cv2.imshow('frame', frame )
+            #cv2.waitKey(1)
 
         else:
             logger.info('waiting for control socket')
             # IDLE mode
-            #if cap.isOpened():
-                #print('closing camera')
-                #cap.release()
+            if cap.isOpened():
+                print('closing camera')
+                cap.release()
             time.sleep(.3)
 
-        # if cv2.waitKey(1) & 0xFF == ord('q'):
-        #     break
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
 
 
 
