@@ -34,6 +34,42 @@ def convert_to_jpg(image):
     im.save(mem_file, 'JPEG')
     return mem_file.getvalue()
 
+class CameraFeedHandler(tornado.websocket.WebSocketHandler):
+    """
+    """
+    watchers = set()
+    def open(self):
+        self.uid = str(uuid.uuid4())
+        logger.info("CameraFeedHandler websocket opened %s" % self.uid)
+        CameraFeedHandler.watchers.add(self)
+
+    def check_origin(self, origin):
+        """
+            Allow CORS requests
+        """
+        return True
+
+    """
+    broadcast to clients, assumes its target data
+    """
+    def on_message(self, message):
+        # logger.info('pushing image')
+        for waiter in CameraFeedHandler.watchers:
+            if waiter == self:
+                continue
+            waiter.write_message(message, binary=True)
+
+    def send_msg(self, msg):
+        try:
+            self.write_message(msg, False)
+        except WebSocketClosedError:
+            logger.warn("websocket closed when sending message")
+
+    def on_close(self):
+        logger.info("image websocket closed %s" % self.uid)
+        CameraFeedHandler.watchers.remove(self)
+
+
 class ImageStreamHandler(tornado.websocket.WebSocketHandler):
     """TBW."""
 
@@ -122,16 +158,57 @@ class ImagePushStreamHandler(tornado.websocket.WebSocketHandler):
             if interval > 0:
                 if len(application.settings['sockets']):
                     _, image = cam.read()
-                    image = cv2.resize(image, ((int)(640), (int)(480)), 0, 0, cv2.INTER_CUBIC)
+
+                    image = cv2.resize(image, ((int)(640), (int)(400)), 0, 0, cv2.INTER_CUBIC)
+                    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+
+
+
+                    if ImagePushStreamHandler.camera_mode != 'RAW':
+
+
+
+                        color_profile = application.settings['color_profiles'].get(ImagePushStreamHandler.camera_mode)
+
+                        mask = None
+
+
+                        if ImagePushStreamHandler.color_mode == 'rgb':
+                            mask = cv2.inRange(image,
+                                               (color_profile.red.min, color_profile.green.min, color_profile.blue.min),
+                                               (color_profile.red.max, color_profile.green.max, color_profile.blue.max))
+
+                        elif ImagePushStreamHandler.color_mode == 'hsv':
+                            hue = color_profile.hsv_hue
+                            sat = color_profile.hsv_sat
+                            val = color_profile.hsv_val
+
+                            hsv = cv2.cvtColor(image, cv2.COLOR_RGB2HSV)
+                            mask = cv2.inRange(hsv, (hue.min, sat.min, val.min),  (hue.max, sat.max, val.max))
+                        #
+                        # elif ImagePushStreamHandler.color_mode == 'hsl':
+                        #     hue = color_profile.hsl_lum
+                        #     sat = color_profile.hsl_lum
+                        #     lum = color_profile.hsl_lum
+                        #     hsl = cv2.cvtColor(image, cv2.COLOR_BGR2HSL)
+                        #     hsl = cv2.inRange(image, (hue.min, sat.min, lum.min),  (hue.max, sat.max, lum.max))
+
+                        if mask is not None:
+                            if ImagePushStreamHandler.apply_mask:
+                                image = cvfilters.apply_mask(image, mask)
+                                image = cv2.erode(image, None, iterations=2)
+                                image = cv2.dilate(image, None, iterations=2)
+                            else:
+                                image = mask
 
                     cv2.putText(image,
-                                'Mode %s' % ImagePushStreamHandler.camera_mode,
-                                (20,20),
-                                cv2.FONT_HERSHEY_DUPLEX,
-                                .4,
-                                colors.BLUE,
-                                1,
-                                cv2.LINE_AA)
+                            'Mode %s' % ImagePushStreamHandler.camera_mode,
+                            (20,20),
+                            cv2.FONT_HERSHEY_DUPLEX,
+                            .4,
+                            colors.BLUE,
+                            1,
+                            cv2.LINE_AA)
 
                     if ImagePushStreamHandler.color_mode is not None:
                         cv2.putText(image,
@@ -142,45 +219,6 @@ class ImagePushStreamHandler(tornado.websocket.WebSocketHandler):
                                     colors.BLUE,
                                     1,
                                     cv2.LINE_AA)
-
-                    color_profile = application.settings['color_profiles'].get(ImagePushStreamHandler.camera_mode)
-
-                    mask = None
-
-                    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-
-                    if ImagePushStreamHandler.color_mode == 'rgb':
-                        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-                        mask = cv2.inRange(image,
-                                           (color_profile.red.min, color_profile.green.min, color_profile.blue.min),
-                                           (color_profile.red.max, color_profile.green.max, color_profile.blue.max))
-
-                    elif ImagePushStreamHandler.color_mode == 'hsv':
-                        hue = color_profile.hsv_hue
-                        sat = color_profile.hsv_sat
-                        val = color_profile.hsv_val
-
-                        logger.info((hue.min, sat.min, val.min))
-                        logger.info((hue.max, sat.max, val.max))
-
-                        hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-                        mask = cv2.inRange(hsv, (hue.min, sat.min, val.min),  (hue.max, sat.max, val.max))
-                    #
-                    # elif ImagePushStreamHandler.color_mode == 'hsl':
-                    #     hue = color_profile.hsl_lum
-                    #     sat = color_profile.hsl_lum
-                    #     lum = color_profile.hsl_lum
-                    #     hsl = cv2.cvtColor(image, cv2.COLOR_BGR2HSL)
-                    #     hsl = cv2.inRange(image, (hue.min, sat.min, lum.min),  (hue.max, sat.max, lum.max))
-
-                    if mask is not None:
-                        if ImagePushStreamHandler.apply_mask:
-                            image = cvfilters.apply_mask(image, mask)
-                            image = cv2.erode(image, None, iterations=2)
-                            image = cv2.dilate(image, None, iterations=2)
-                        else:
-                            image = mask
-
                     jpg = convert_to_jpg(image)
                     for ws in application.settings['sockets']:
                         ws.images.append(jpg)

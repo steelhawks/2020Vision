@@ -10,13 +10,24 @@ class Controls():
 
     def __init__(self):
         self.enable_camera = True
-        self.enable_processing = False
-        self.enable_streaming = True
+
+        self.enable_camera_feed = False
+        self.enable_calibration_feed = False
+        self.enable_processing_feed = True
+
+
         self.camera_mode = CAMERA_MODE_BALL
         self.enable_feed = True
-        self.turn_camera_off = False
+        self.color_profiles = {}
+
+
+        self.calibration = {}
+
 
     def connect(self):
         controller_listener.connect(self)
+
+    def update(message):
+        print(message)
 
 main_controller = Controls()

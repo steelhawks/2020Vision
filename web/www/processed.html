@@ -111,7 +111,7 @@
           self.enable_calibration_feed = data.enable_calibration_feed
         }
       }
-      start_camera_stream("/camera/ws", "image");
+      start_camera_stream("/processed/ws", "image");
     },
     methods: {
       toggleCameraFeed: function() {

@@ -9,9 +9,11 @@ in masked image to find ball
 import math
 import cv2
 from processing import colors
-from processing import filters
+from processing import cvfilters
 from processing import shape_util
 import time
+
+from profiles import color_profile
 
 import network
 
@@ -19,35 +21,33 @@ MIN_AREA = 1000
 BALL_RADIUS = 3.5
 
 
-debug = True
+debug = False
 
-def process(img, camera, profile):
+
+def process(img, camera, frame_cnt, color_profile):
     global rgb_window_active, hsv_window_active
 
     tracking_data = []
+    original_img = img.copy()
 
-    FRAME_WIDTH = camera.FRAME_WIDTH
-    FRAME_HEIGHT = camera.FRAME_HEIGHT
+    img = cv2.GaussianBlur(img, (13, 13), 0)
 
-    img = filters.resize(img, camera.FRAME_WIDTH, camera.FRAME_HEIGHT)
+    #image = cv2.resize(image, ((int)(640), (int)(400)), 0, 0, cv2.INTER_CUBIC)
+    #image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
-    original_img = img
-
-    rgb_mask = filters.rgb_threshold(img, profile)
-
-    img = filters.apply_mask(img, rgb_mask)
-
-    img = filters.hsv_threshold(img, profile)
+    img = cvfilters.hsv_threshold(img, color_profile)
+    img = cv2.erode(img, None, iterations=2)
+    img = cv2.dilate(img, None, iterations=2)
 
     if debug:
         cv2.imshow('hsv', img)
-
 
     contours, hierarchy = cv2.findContours(img,
                                               cv2.RETR_EXTERNAL,
                                               cv2.CHAIN_APPROX_SIMPLE)
 
     contour_list = []
+
     # algorithm for detecting rectangular object (loading bay)
     for (index, contour) in enumerate(contours):
 
@@ -58,6 +58,7 @@ def process(img, camera, profile):
         # limit the number of contours to process
         #
 
+        #print('%s area:%s' %(index, area) )
         if area > MIN_AREA:
             contour_list.append(contour)
             center_mass_x = x + w / 2
@@ -67,12 +68,15 @@ def process(img, camera, profile):
             (x, y) = (int(x), int(y))
             _, _, w, h = cv2.boundingRect(contour)
             # tests for if its width is around its height which should be true
-            if(0.9 <= w / h <= 1.10):
+
+            # print('x: %s y:%s ratio:%s' % (w, h, w/h))
+
+            if True :
                 distance = shape_util.get_distance(w, 2 * radius, camera.FOCAL_LENGTH)
                 #convert distance to inches
                 distance = 6520 * (w ** -1.02)
-                print(distance * radius ** 2)
-                
+                # print(distance * radius ** 2)
+
                 # checks if radius of ball is around actual radius
                 if(BALL_RADIUS * 0.9 <= radius <= BALL_RADIUS * 1.10):
                     cv2.circle(original_img, (x, y), int(radius),
@@ -87,10 +91,17 @@ def process(img, camera, profile):
                 area_text = 'area:%s width:%s height:%s' % (area, w, h)
                 angle_text = 'angle:%.2f  distance:%s' % (angle, distance)
 
+                distance = int(distance)
+                angle = int(angle)
+                radius = int(radius)
+
                 # set tracking_data
-                tracking_data.append(dict(index=index,
-                                          distance=distance,
+                tracking_data.append(dict(shape='BALL',
+                                          radius=radius,
+                                          index=index,
+                                          dist=int(distance),
                                           angle=angle,
+                                          frame=frame_cnt,
                                           xpos=center_mass_x,
                                           ypos=center_mass_y))
 
@@ -100,13 +111,13 @@ def process(img, camera, profile):
                 cv2.putText(original_img, angle_text, (x, y - 5), font, .4, colors.WHITE, 1, cv2.LINE_AA)
                 cv2.putText(original_img, radius_text, (x, y - 50), font, .4, colors.WHITE, 1, cv2.LINE_AA)
 
-                cv2.drawContours(original_img, contours, index, colors.random(), 2)
+                cv2.drawContours(original_img, contours, index, colors.GREEN, 2)
                 cv2.circle(original_img, (int(center_mass_x), int(center_mass_y)), 5, colors.GREEN, -1)
-                cv2.line(original_img, (FRAME_WIDTH // 2, FRAME_HEIGHT), (int(center_mass_x), int(center_mass_y)), colors.GREEN, 2)
+                #cv2.line(original_img, (FRAME_WIDTH // 2, FRAME_HEIGHT), (int(center_mass_x), int(center_mass_y)), colors.GREEN, 2)
 
-            if debug:
-                
-                cv2.drawContours(original_img, contours, index, colors.random(), 2)
+            #if debug:
+
+                #cv2.drawContours(original_img, contours, index, colors.random(), 2)
                 #cv2.rectangle(original_img, (x, y), (x + w, y + h), colors.WHITE, 2)
 
                 # print the rectangle that did not match
@@ -114,7 +125,7 @@ def process(img, camera, profile):
             #
             # print 'square: %s,%s' % (w,h)
             # print w/h, h/w
-    top_center = (FRAME_WIDTH // 2, FRAME_HEIGHT)
-    bottom_center = (FRAME_WIDTH // 2, 0)
-    cv2.line(original_img, top_center, bottom_center, colors.WHITE, 4)
+    #top_center = (FRAME_WIDTH // 2, FRAME_HEIGHT)
+    #bottom_center = (FRAME_WIDTH // 2, 0)
+    #cv2.line(original_img, top_center, bottom_center, colors.WHITE, 4)
     return original_img, tracking_data

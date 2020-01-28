@@ -145,18 +145,27 @@ background-image: radial-gradient( circle farthest-corner at 0.5% 97.2%,  #2fad5
 
 	</script>
 
-	<canvas id="canvas"
-			width="960"
-			height="540"
-			style="border:1px solid black"></canvas>
+	<div class="columns">
+		<div class="column col-6">
+			<canvas id="canvas"
+					width="960"
+					height="540"
+					style="border:1px solid black"></canvas>
+		</div>
+		<div class="column col-5">
+			<img id="processed_image" src=""></img>
+		</div>
+
 
 	<div id="app"></div>
 
 </div>
 
+	<script src="/ws_streamer.js"></script>
 	<script src="/socket.js"></script>
 	<script src="/app.js"></script>
 	<script src="/tracker.js"></script>
+
 </body>
 
-</html> 
+</html>

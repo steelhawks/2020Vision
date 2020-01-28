@@ -6,11 +6,24 @@ from multiprocessing import Process
 
 from processing import colors
 import network as networktables
+
 from cameras import logitech_c270, generic
+from cameras import Camera
+from cameras import image_converter
+
 from profiles import color_profiles
 from processing import bay_tracker
 from processing import port_tracker
 from processing import ball_tracker2
+from processing import color_calibrate
+
+
+import controls
+from controls import main_controller
+import controller_listener
+
+from profiles.color_profile import ColorProfile
+
 import _thread as thread
 import time
 
@@ -25,9 +38,6 @@ import start_web
 import websocket
 from websocket import create_connection
 import ujson as json
-
-from cameras import Camera
-from web.handlers import main_controller
 
 
 # initiate the top level logger
@@ -55,12 +65,15 @@ def main():
 
     cap = cv2.VideoCapture(config.video_source_number)
 
-    # out_pipeline = gst_utils.get_udp_streamer_pipeline2(config.gstreamer_client_ip,
-    #                                          config.gstreamer_client_port,
-    #                                          config.gstreamer_bitrate)
+    enable_gstreamer_pipeline = False
 
-    # out_pipeline = gst_utils.get_udp_sender(config.gstreamer_client_ip,
-    #                                        config.gstreamer_client_port)
+    out = None
+    if enable_gstreamer_pipeline:
+        out_pipeline = gst_utils.get_udp_sender(config.gstreamer_client_ip, config.gstreamer_client_port)
+
+        # out_pipeline = gst_utils.get_udp_streamer_pipeline2(config.gstreamer_client_ip,
+        #                                          config.gstreamer_client_port,
+        #                                          config.gstreamer_bitrate)
 
     # Set camera properties
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
@@ -70,60 +83,34 @@ def main():
     cap.set(cv2.CAP_PROP_EXPOSURE, 0.02)
     cap.set(cv2.CAP_PROP_CONTRAST, 0.0)
 
+        out = cv2.VideoWriter(out_pipeline, 0,
+                              camera.FPS,
+                              (camera.FRAME_WIDTH, camera.FRAME_HEIGHT),
+                              True)
+
     # Set camera properties
     camera = Camera(cap.get(cv2.CAP_PROP_FRAME_WIDTH),
                     cap.get(cv2.CAP_PROP_FRAME_HEIGHT),
                     cap.get(cv2.CAP_PROP_FPS))
 
+    color_profile_map = {}
+    for profile in [controls.CAMERA_MODE_RAW,
+                    controls.CAMERA_MODE_BALL,
+                    controls.CAMERA_MODE_HEXAGON,
+                    controls.CAMERA_MODE_LOADING_BAY]:
 
-    # print([camera.FRAME_WIDTH])
-    # print([camera.FRAME_HEIGHT])
-    # print([camera.FPS])
+        color_profile_map[profile] = ColorProfile(profile)
 
-    # out = cv2.VideoWriter(out_pipeline, 0,
-    #                      camera.FPS,
-    #                      (camera.FRAME_WIDTH, camera.FRAME_HEIGHT),
-    #                      True)
+    main_controller.color_profiles = color_profile_map
 
-    #TODO: if no camera, exit and msg no camera
-    # time.sleep(1)
-
-
-    #websocket.enableTrace(True)
-
-    def update_controls(ws, message):
-        logger.info(message)
-
-    def ws_closed(ws):
-        logger.info('closed socket')
-
-    def on_error(ws, error):
-        print(error)
-
-    # tracking_ws = create_connection("wss://localhost:8080/tracking/ws/")
-    #
-
-    def on_open(ws):
-        def run(*args):
-            for i in range(3):
-                time.sleep(1)
-                ws.send("Hello %d" % i)
-            time.sleep(1)
-            ws.close()
-            print("thread terminating...")
-        thread.start_new_thread(run, ())
+    time.sleep(5)
 
     tracking_ws = create_connection("ws://localhost:8080/tracking/ws")
+    camera_ws = create_connection("ws://localhost:8080/camera/ws")
+    processed_ws = create_connection("ws://localhost:8080/processed/ws")
+    calibration_ws = create_connection("ws://localhost:8080/calibration/ws")
 
-    def start_dashboard_socket(*args):
-        dashboard_ws = websocket.WebSocketApp("ws://localhost:8080/dashboard/ws",
-            on_message = update_controls,
-            on_close= ws_closed,
-            on_error = on_error)
-        dashboard.on_open = on_open
-        dashboard_ws.run_forever()
-
-    thread.start_new_thread(start_dashboard_socket, ())
+    controller_listener.start("ws://localhost:8080/dashboard/ws")
 
     logger.info('starting main loop ')
     frame_cnt = 0
@@ -131,14 +118,16 @@ def main():
 
         frame_cnt += 1
 
-        if True or main_controller.enable_camera:
+        if main_controller.enable_camera:
 
             if not cap.isOpened():
                 print('opening camera')
                 cap.open(config.video_source_number)
 
-            _, frame = cap.read()
-            #frame = filters.resize(frame, camera.FRAME_WIDTH, camera.FRAME_HEIGHT)
+            _, raw_frame = cap.read()
+
+            rgb_frame = cv2.cvtColor(raw_frame, cv2.COLOR_BGR2RGB)
+
             if main_controller.camera_mode == CAMERA_MODE_RAW:
 
                 frame = frame
@@ -151,19 +140,40 @@ def main():
 
             elif main_controller.camera_mode == CAMERA_MODE_BALL:
 
-                frame, tracking_data = ball_tracker2.process(frame, generic, frame_cnt)
-                dashboard.putStringArray(networktables.keys.vision_target_data, tracking_data)
+                color_profile=main_controller.color_profiles[CAMERA_MODE_BALL]
+
+                processed_frame, tracking_data = ball_tracker.process(rgb_frame,
+                                                            camera,
+                                                            frame_cnt,
+                                                            color_profile)
+
                 tracking_ws.send(json.dumps(dict(targets=tracking_data)))
 
             elif main_controller.camera_mode == CAMERA_MODE_HEXAGON:
 
-                frame, tracking_data = port_tracker.process(frame, generic)
-                dashboard.putStringArray(networktables.keys.vision_target_data, tracking_data)
-                tracking_ws.send(json.dumps(dict(targets=tracking_data)))
+                processed_frame = port_tracker.process(frame, generic, color_profiles.ReflectiveProfile())
 
-            # logger.info(main_controller.camera_mode)
-            if main_controller.enable_streaming:
-                cv2.putText(frame,
+
+            if main_controller.enable_camera_feed:
+
+                jpg=image_converter.convert_to_jpg(rgb_frame)
+                camera_ws.send_binary(jpg)
+
+            if main_controller.enable_calibration_feed:
+
+                calibration_frame = raw_frame.copy()
+
+                calibration_frame = color_calibrate.process(calibration_frame,
+                                                            camera_mode = main_controller.calibration.get('camera_mode', 'RAW'),
+                                                            color_mode = main_controller.calibration.get('color_mode'),
+                                                            apply_mask = main_controller.calibration.get('apply_mask', False))
+
+                jpg=image_converter.convert_to_jpg(calibration_frame)
+                calibration_ws.send_binary(jpg)
+
+            if main_controller.enable_processing_feed:
+
+                cv2.putText(processed_frame,
                             'Tracking Mode %s' % main_controller.camera_mode,
                             (10,10),
                             cv2.FONT_HERSHEY_DUPLEX,
@@ -172,13 +182,17 @@ def main():
                             1,
                             cv2.LINE_AA)
 
+                jpg=image_converter.convert_to_jpg(processed_frame)
+                processed_ws.send_binary(jpg)
 
-                # out.write(frame)
+                # if out is not None:
+                #     out.write(frame)
 
             cv2.imshow('frame', frame )
             #cv2.waitKey(1)
 
         else:
+            logger.info('waiting for control socket')
             # IDLE mode
             if cap.isOpened():
                 print('closing camera')
@@ -189,17 +203,6 @@ def main():
             break
 
 
-
-
-
-def single_frame(debug=False):
-
-    img = cv2.imread("frc_cube.jpg")
-    img = cube_tracker.process(img,
-                               generic)
-
-    cv2.imshow('Objects Detected',img)
-    cv2.waitKey()
 
 if __name__ == '__main__':
     p = Process(target=start_web.main)
