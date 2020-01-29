@@ -42,11 +42,7 @@ new Vue({
         self.controls.camera_mode = 'BAY'
         Socket.send({'controls':self.controls})
     },
-    enableCalibrate: function(){
-        var self = this;
-        self.controls.camera_mode = 'CALIBRATE'
-        Socket.send({'controls':self.controls})
-    }
+
     // enableProcessing: function(){
     //     var self = this;
     //     if(self.controls.enable_processing == false){

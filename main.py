@@ -74,6 +74,10 @@ def main():
         # out_pipeline = gst_utils.get_udp_streamer_pipeline2(config.gstreamer_client_ip,
         #                                          config.gstreamer_client_port,
         #                                          config.gstreamer_bitrate)
+        out = cv2.VideoWriter(out_pipeline, 0,
+                              camera.FPS,
+                              (camera.FRAME_WIDTH, camera.FRAME_HEIGHT),
+                              True)
 
     # Set camera properties
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
@@ -82,11 +86,7 @@ def main():
     cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0.25)
     cap.set(cv2.CAP_PROP_EXPOSURE, 0.02)
     cap.set(cv2.CAP_PROP_CONTRAST, 0.0)
-
-        out = cv2.VideoWriter(out_pipeline, 0,
-                              camera.FPS,
-                              (camera.FRAME_WIDTH, camera.FRAME_HEIGHT),
-                              True)
+        
 
     # Set camera properties
     camera = Camera(cap.get(cv2.CAP_PROP_FRAME_WIDTH),
@@ -134,7 +134,13 @@ def main():
 
             elif main_controller.camera_mode == CAMERA_MODE_LOADING_BAY:
             
-                frame, tracking_data = bay_tracker.process(frame, generic)
+                color_profile=main_controller.color_profiles[CAMERA_MODE_LOADING_BAY]
+
+                processed_frame, tracking_data = bay_tracker.process(rgb_frame,
+                                                            camera,
+                                                            frame_cnt,
+                                                            color_profile)
+
                 dashboard.putStringArray(networktables.keys.vision_target_data, tracking_data)
                 tracking_ws.send(json.dumps(dict(targets=tracking_data)))
 
@@ -142,7 +148,7 @@ def main():
 
                 color_profile=main_controller.color_profiles[CAMERA_MODE_BALL]
 
-                processed_frame, tracking_data = ball_tracker.process(rgb_frame,
+                processed_frame, tracking_data = ball_tracker2.process(rgb_frame,
                                                             camera,
                                                             frame_cnt,
                                                             color_profile)
@@ -151,7 +157,12 @@ def main():
 
             elif main_controller.camera_mode == CAMERA_MODE_HEXAGON:
 
-                processed_frame = port_tracker.process(frame, generic, color_profiles.ReflectiveProfile())
+                color_profile=main_controller.color_profiles[CAMERA_MODE_HEXAGON]
+
+                processed_frame, tracking_data = port_tracker.process(rgb_frame,
+                                                            camera,
+                                                            frame_cnt,
+                                                            color_profile)
 
 
             if main_controller.enable_camera_feed:
@@ -188,7 +199,7 @@ def main():
                 # if out is not None:
                 #     out.write(frame)
 
-            cv2.imshow('frame', frame )
+            cv2.imshow('frame', processed_frame )
             #cv2.waitKey(1)
 
         else:

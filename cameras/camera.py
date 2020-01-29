@@ -24,7 +24,7 @@ class USBCam():
 
     def read(self):
         """TBW."""
-        return self.cam.read()
+        return super().cam.read()
 
     def read_image(self):
         """TBW."""

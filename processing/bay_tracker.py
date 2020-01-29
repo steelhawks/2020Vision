@@ -27,7 +27,7 @@ WIDTH_TO_HEIGHT_RATIO = 7 / 11
 
 debug = False
 
-def process(img, camera):
+def process(img, camera, frame_cnt, color_profile):
     global rgb_window_active, hsv_window_active
 
     FRAME_WIDTH = camera.FRAME_WIDTH
@@ -37,9 +37,8 @@ def process(img, camera):
     original_img = img
 
     img = cv2.GaussianBlur(img, (13, 13), 0)
-    img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-    hsv_mask = cvfilters.hsv_threshold(img, color_profiles.BAY_COLOR_PROFILE)
+    hsv_mask = cvfilters.hsv_threshold(img, color_profile)
     img = cv2.bitwise_and(img, img, hsv_mask)
     img = cv2.erode(img, None, iterations=2)
     img = cv2.dilate(img, None, iterations=2)
