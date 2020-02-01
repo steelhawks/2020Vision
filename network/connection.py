@@ -26,7 +26,7 @@ def init(client=True, host=None):
             notified[0] = True
             cond.notify()
             
-    if client is True:
+    if client is True: # if there is a client to send to, we start up the network tables with the appropriate ip
         NetworkTables.initialize(server=config.networktables_server_ip)
         NetworkTables.addConnectionListener(connectionListener, immediateNotify=True)
         with cond:

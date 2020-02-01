@@ -5,10 +5,10 @@ import time
 from multiprocessing import Process
 
 from processing import colors
-import network as networktables
+# import network as networktables
 
 from cameras import logitech_c270, generic
-from cameras import Camera
+from cameras.camera import USBCam, Camera
 from cameras import image_converter
 
 from processing import bay_tracker
@@ -49,44 +49,37 @@ logging.basicConfig(
 )
 
 logger = logging.getLogger('app')
+# creating instance of logger object(?)
 
-
-def main():
-
-    cv2.destroyAllWindows()
-
-    networktables.init(client=False)
-
-    dashboard = networktables.get()
-    dashboard.putBoolean(networktables.keys.vision_initialized, True)
+def main(): # main method defined
 
     cv2.destroyAllWindows()
 
-    cap = cv2.VideoCapture(config.video_source_number)
+    # networktables.init(client=False)
 
-    enable_gstreamer_pipeline = False
+    # dashboard = networktables.get()
+    # dashboard.putBoolean(networktables.keys.vision_initialized, True)
 
-    out = None
-    if enable_gstreamer_pipeline:
-        out_pipeline = gst_utils.get_udp_sender(config.gstreamer_client_ip, config.gstreamer_client_port)
+    cv2.destroyAllWindows()
 
-        # out_pipeline = gst_utils.get_udp_streamer_pipeline2(config.gstreamer_client_ip,
-        #                                          config.gstreamer_client_port,
-        #                                          config.gstreamer_bitrate)
-        out = cv2.VideoWriter(out_pipeline, 0,
-                              camera.FPS,
-                              (camera.FRAME_WIDTH, camera.FRAME_HEIGHT),
-                              True)
+    # cap = cv2.VideoCapture(config.video_source_number)
+    # cap set to a cv2 object with input from a preset source
+    mainCam = USBCam()
+    mainCam.open(config.video_source_number)
+
+    if(main_controller.enable_dual_camera):
+        longCam = USBCam()
+        longCam.open(config.long_video_source_number)
 
     # Set camera properties
-    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
-    cap.set(cv2.CAP_PROP_FPS, 120)
-    cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0.25)
-    cap.set(cv2.CAP_PROP_EXPOSURE, 0.02)
-    cap.set(cv2.CAP_PROP_CONTRAST, 0.0)
+    # cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
+    # cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
+    # cap.set(cv2.CAP_PROP_FPS, 120)
+    # cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0.25)
+    # cap.set(cv2.CAP_PROP_EXPOSURE, 0.02)
+    # cap.set(cv2.CAP_PROP_CONTRAST, 0.0)
         
-
+    cap = mainCam.getCam()
     # Set camera properties
     camera = Camera(cap.get(cv2.CAP_PROP_FRAME_WIDTH),
                     cap.get(cv2.CAP_PROP_FRAME_HEIGHT),
@@ -122,10 +115,16 @@ def main():
 
             if not cap.isOpened():
                 print('opening camera')
-                cap.open(config.video_source_number)
-
-            _, bgr_frame = cap.read()
-
+                if main_controller.enable_dual_camera:
+                   longCam.open(config.video_source_number)                
+                mainCam.open(config.wide_cam_source_number)
+                # if the cap is not already open, do so
+                
+            if main_controller.camera_mode == CAMERA_MODE_HEXAGON and main_controller.enable_dual_camera:
+                _, bgr_frame = longCam.read()
+            else:
+                _, bgr_frame = mainCam.read()
+            
             resized_frame = cv2.resize(bgr_frame, ((int)(640), (int)(480)), 0, 0, cv2.INTER_CUBIC)
             rgb_frame = cv2.cvtColor(resized_frame, cv2.COLOR_BGR2RGB)
 
@@ -134,6 +133,7 @@ def main():
 
                 jpg=image_converter.convert_to_jpg(rgb_frame)
                 camera_ws.send_binary(jpg)
+                # take rgb frame and convert it to a displayable jpg form, then send that as binary through websocket
 
             if main_controller.enable_calibration_feed:
 
@@ -151,19 +151,22 @@ def main():
             if main_controller.camera_mode == CAMERA_MODE_RAW:
 
                 processed_frame = rgb_frame
+                # Camera mode set to "raw" - takes rgb frame
 
             elif main_controller.camera_mode == CAMERA_MODE_LOADING_BAY:
             
                 color_profile=main_controller.color_profiles[CAMERA_MODE_LOADING_BAY]
+                # Set color profile to that of "camera mode loading bay"
 
                 processed_frame, tracking_data = bay_tracker.process(rgb_frame,
                                                             camera,
                                                             frame_cnt,
                                                             color_profile)
+                                                            # Frame is displayed with bay tracking properties
 
             elif main_controller.camera_mode == CAMERA_MODE_BALL:
 
-                color_profile=main_controller.color_profiles[CAMERA_MODE_BALL]
+                color_profile=main_controller.color_profiles[CAMERA_MODE_BALL] # color profile set to the CAMERA MODE BALL one
                 # print("ball")
 
                 processed_frame, tracking_data = ball_tracker2.process(rgb_frame,
@@ -183,7 +186,7 @@ def main():
 
 
 
-            if main_controller.enable_processing_feed:
+            if main_controller.enable_processing_feed: # once we start showing our processing feed...
 
                 cv2.putText(processed_frame,
                             'Tracking Mode %s' % main_controller.camera_mode,
@@ -201,10 +204,11 @@ def main():
                 #     out.write(frame)
             if tracking_data is not None and main_controller.send_tracking_data:
                 # sort tracking data by closests object
+                logger.info(tracking_data)
                 tracking_data = sorted(tracking_data, key = lambda i: i['dist'])
                 tracking_ws.send(json.dumps(dict(targets=tracking_data)))
                 # put into networktables
-                dashboard.putStringArray(networktables.keys.vision_target_data, tracking_data)
+                # dashboard.putStringArray(networktables.keys.vision_target_data, tracking_data)
 
             # cv2.imshow('frame', processed_frame )
             # cv2.waitKey(0)
