@@ -15,6 +15,7 @@ class Controls():
         self.enable_calibration_feed = False
         self.enable_processing_feed = True
 
+        self.send_tracking_data = True
 
         self.camera_mode = CAMERA_MODE_BALL
         self.enable_feed = True

@@ -108,12 +108,13 @@ def main():
     processed_ws = create_connection("ws://localhost:8080/processed/ws")
     calibration_ws = create_connection("ws://localhost:8080/calibration/ws")
     tracking_ws = create_connection("ws://localhost:8080/tracking/ws")
-
     controller_listener.start("ws://localhost:8080/dashboard/ws")
 
     logger.info('starting main loop ')
     frame_cnt = 0
     while(True):
+
+        tracking_data = None
 
         frame_cnt += 1
 
@@ -159,9 +160,6 @@ def main():
                                                             camera,
                                                             frame_cnt,
                                                             color_profile)
-                # print(tracking_data)
-                dashboard.putStringArray(networktables.keys.vision_target_data, tracking_data)
-                tracking_ws.send(json.dumps(dict(targets=tracking_data)))
 
             elif main_controller.camera_mode == CAMERA_MODE_BALL:
 
@@ -172,7 +170,6 @@ def main():
                                                             camera,
                                                             frame_cnt,
                                                             color_profile)
-                tracking_ws.send(json.dumps(dict(targets=tracking_data)))
 
             elif main_controller.camera_mode == CAMERA_MODE_HEXAGON:
 
@@ -202,6 +199,12 @@ def main():
 
                 # if out is not None:
                 #     out.write(frame)
+            if tracking_data is not None and main_controller.send_tracking_data:
+                # sort tracking data by closests object
+                tracking_data = sorted(tracking_data, key = lambda i: i['dist'])
+                tracking_ws.send(json.dumps(dict(targets=tracking_data)))
+                # put into networktables
+                dashboard.putStringArray(networktables.keys.vision_target_data, tracking_data)
 
             # cv2.imshow('frame', processed_frame )
             # cv2.waitKey(0)
@@ -220,7 +223,7 @@ def main():
 
 
 if __name__ == '__main__':
-    #p = Process(target=start_web.main)
-    #p.start()
+    p = Process(target=start_web.main)
+    p.start()
     main()
-    #p.join()
+    p.join()

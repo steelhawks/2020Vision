@@ -83,14 +83,8 @@ def process(img, camera, frame_cnt, color_profile):
                         xpos=center_mass_x,
                         ypos=center_mass_y)
 
-                if(not tracking_data):
-                    tracking_data.append(data)
-                else:
-                    for target in tracking_data:
-                        if(distance < target["dist"]):
-                            tracking_data.insert(tracking_data.index(target), data)
-                            break
-
+                tracking_data.append(data)
+                
                 num_vertices = shape_util.find_vertices(contour)
                 vertices_text = 'vertices:%s' % (num_vertices)
                 coordinate_text = 'x:%s y:%s ' % (center_mass_x, center_mass_y)

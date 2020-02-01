@@ -81,16 +81,8 @@ def process(img, camera, frame_cnt, color_profile):
                         angle=angle,
                         xpos=center_mass_x,
                         ypos=center_mass_y)
-
-                if len(tracking_data) == 0:
-                    tracking_data.append(data)
-                else:
-                    for target in tracking_data:
-                        if distance < target["dist"]:
-                            tracking_data.insert(tracking_data.index(target), data)
-                            break
-
-                            
+                
+                tracking_data.append(data)
                 
                 vertices_text = 'vertices:%s' % (num_vertices)
                 coordinate_text = 'x:%s y:%s ' % (center_mass_x, center_mass_y)

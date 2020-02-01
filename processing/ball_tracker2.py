@@ -98,14 +98,7 @@ def process(img, camera, frame_cnt, color_profile):
                         ypos=center_mass_y)
 
                 tracking_data.append(data)
-                # sorter goes here
-                # if len(tracking_data) == 0:
-                #     tracking_data.append(data)
-                # else:
-                #     for target in tracking_data:
-                #         if distance < target["dist"]:
-                #             tracking_data.insert(tracking_data.index(target), data)
-                #             break
+
                 #labels image
                 radius_text = 'radius:%s' % (radius)
                 coordinate_text = 'x:%s y:%s ' % (center_mass_x, center_mass_y)
@@ -134,5 +127,4 @@ def process(img, camera, frame_cnt, color_profile):
     bottom_center = (FRAME_WIDTH // 2, 0)
     cv2.line(original_img, top_center, bottom_center, colors.WHITE, 4)
 
-    tracking_data = sorted(tracking_data, key = lambda i: i['dist'])
     return original_img, tracking_data
