@@ -27,35 +27,34 @@ function showFPS(){
 
 function draw(targets) {
 
-
     var offscreenCanvas = document.createElement('canvas');
     offscreenCanvas.width = canvas.width;
     offscreenCanvas.height = canvas.height;
-
     var octx = offscreenCanvas.getContext("2d");
+    octx.fillStyle = "#0095DD";
     targets.forEach(function(target){
-      octx.fillStyle = "#0095DD";
-      if(target.shape == 'BALL'){
-          octx.beginPath();
-          octx.arc(target.xpos, target.ypos, target.radius, 0, Math.PI*2);
-          octx.fill();
-          octx.closePath();
-      }
-      if(target.shape == 'BAY'){
-          octx.strokeRect(target.xpos,target.ypos, target.width, target.width * 11/7);
-          octx.fillRect(target.xpos,target.ypos, target.width, target.width * 11/7);
-      }
-      if(target.shape =='PORT'){
-          x = target.xpos;
-          y = target.ypos;
-          size = target.width;
-          octx.beginPath();
-          octx.moveTo(x + size * Math.cos(0), y + size * Math.sin(0));
-          for (side; side < 7; side++) {
-              octx.lineTo(x + size * Math.cos(side * 2 * Math.PI / 6), y + size * Math.sin(side * 2 * Math.PI / 6));
-          }
-      }
-  })
+        if(target.shape == 'BALL'){
+            octx.beginPath();
+            octx.arc(target.xpos, target.ypos, target.radius, 0, Math.PI*2);
+            octx.fill();
+            octx.closePath();
+        }
+        if(target.shape == 'BAY'){
+            octx.strokeRect(target.xpos,target.ypos, target.width, target.width * 11/7);
+            octx.fillRect(target.xpos,target.ypos, target.width, target.width * 11/7);
+        }
+        if(target.shape =='PORT'){
+            x = target.xpos;
+            y = target.ypos;
+            size = target.width;
+            octx.beginPath();
+            octx.moveTo(x + size * Math.cos(0), y + size * Math.sin(0));
+            for (var side; side < 7; side++) {
+                octx.lineTo(x + size * Math.cos(side * 2 * Math.PI / 6), y + size * Math.sin(side * 2 * Math.PI / 6));
+            }
+            octx.fill();
+        }
+    })
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     ctx.drawImage(offscreenCanvas, 0, 0);
     showFPS()
@@ -70,7 +69,7 @@ var connect = function() {
 	const loc = window.location;
 	const protocol = loc.protocol === "https:" ? "wss:" : "ws:";
 	const address = `${protocol}//${loc.host}/tracking/ws`;
-
+    
 	var socket = new WebSocket(address);
 	if (socket) {
 		socket.onopen = function() {
@@ -79,10 +78,10 @@ var connect = function() {
 		};
 
 		socket.onmessage = function(msg) {
-			const data = JSON.parse(msg.data);
-      if(data.hasOwnProperty('targets')){
-          draw(data['targets'])
-      }
+            const data = JSON.parse(msg.data);
+            if(data.hasOwnProperty('targets')){
+                draw(data['targets'])
+            }
 		};
 
 		socket.onclose = function() {

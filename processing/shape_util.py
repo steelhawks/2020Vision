@@ -3,12 +3,12 @@ import math
 ###
 
 ###
-def dimensions_match(contour, vertices, desired_ratio):
+def dimensions_match(contour, vertices, range, desired_ratio):
     peri = cv2.arcLength(contour, True)
     approx = cv2.approxPolyDP(contour, 0.04 * peri, True)
     # print(len(approx))
     # if
-    if len(approx) == vertices or len(approx) == vertices - 1 or len(approx) == vertices + 1:
+    if vertices - range <= len(approx) <= vertices + range:
         # compute the bounding box of the contour and use the
         # bounding box to compute the aspect ratio
         (x, y, w, h) = cv2.boundingRect(approx)
@@ -53,4 +53,4 @@ def get_distance(width_pixel, width_actual, focal_length):
     return focal_length * width_actual / width_pixel
 
 def distance_in_inches(width_pixel):
-    return 762 * width_pixel ** -0.8
+    return 762 * (width_pixel ** -0.8)

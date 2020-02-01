@@ -27,6 +27,7 @@ from io import BytesIO
 from processing import colors
 from processing import cvfilters
 
+# not part of calibration anymore
 def convert_to_jpg(image):
     """TBW."""
     im = Image.fromarray(image)

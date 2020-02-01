@@ -4,6 +4,7 @@ from os.path import abspath, dirname, exists, join
 import config
 import logging
 import os.path
+import controls
 
 from cameras.camera import USBCam
 from tornado.web import StaticFileHandler
@@ -16,7 +17,7 @@ from web.handlers import ProcessedVideoWS
 from web.handlers import CalibrationFeedWS
 
 from profiles.color_profile import ColorProfile
-import controls
+from controls import main_controller
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +34,6 @@ def start():
                     controls.CAMERA_MODE_LOADING_BAY]:
 
         color_profile_map[profile] = ColorProfile(profile)
-
 
     app = tornado.web.Application(
         handlers=[
@@ -57,6 +57,8 @@ def start():
 
     # Start the app
     logger.info("Listening on http://localhost:%s/", config.tornado_server_port)
+
+    main_controller.color_profiles = color_profile_map
 
     app.listen(config.tornado_server_port)
     IOLoop.current().start()

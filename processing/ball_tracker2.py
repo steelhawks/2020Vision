@@ -14,35 +14,41 @@ from processing import cvfilters
 from processing import shape_util
 import time
 
-from profiles import color_profiles
 from controls import CAMERA_MODE_RAW, CAMERA_MODE_LOADING_BAY, CAMERA_MODE_BALL, CAMERA_MODE_HEXAGON
 import network
 
-MIN_AREA = 30
+MIN_AREA = 15
 BALL_RADIUS = 3.5
 
-
-debug = True
+debug = False
 
 def process(img, camera, frame_cnt, color_profile):
     global rgb_window_active, hsv_window_active
 
     FRAME_WIDTH = camera.FRAME_WIDTH
     FRAME_HEIGHT = camera.FRAME_HEIGHT
+    red = color_profile.red
+    green = color_profile.green
+    blue = color_profile.blue
+    hue = color_profile.hsv_hue
+    sat = color_profile.hsv_sat
+    val = color_profile.hsv_val
 
     tracking_data = []
     original_img = img
 
     img = cv2.GaussianBlur(img, (13, 13), 0)
-    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-    hsv_mask = cvfilters.hsv_threshold(img, color_profile)
-    img = cv2.bitwise_and(img, img, hsv_mask)
+    #cv2.imshow('img', img)
+    hsv = cv2.cvtColor(img, cv2.COLOR_RGB2HSV)
+    mask_hsv = cv2.inRange(hsv, (hue.min, sat.min, val.min),  (hue.max, sat.max, val.max))
+    mask_rgb = cv2.inRange(img, (red.min, green.min, blue.min), (red.max, green.max, blue.max))
+    img = cvfilters.apply_mask(img, mask_hsv)
+    img = cvfilters.apply_mask(img, mask_rgb)
     img = cv2.erode(img, None, iterations=2)
     img = cv2.dilate(img, None, iterations=2)
     img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
     if debug:
-        cv2.imshow('ball tracker hsv', hsv_mask)
         cv2.imshow('ball tracker img', img)
 
     _, contours, hierarchy = cv2.findContours(img,
@@ -57,16 +63,17 @@ def process(img, camera, frame_cnt, color_profile):
         peri = cv2.arcLength(contour, True)
         approx = cv2.approxPolyDP(contour, 0.04 * peri, True)
         area = cv2.contourArea(approx)
-        x, y, w, h = cv2.boundingRect(approx)
-        ((x, y), radius) = cv2.minEnclosingCircle(contour)
         # limit the number of contours to process
         #
 
         #print('%s area:%s' %(index, area) )
         if area > MIN_AREA:
-            contour_list.append(contour)
+            x, y, w, h = cv2.boundingRect(approx)
             center_mass_x = x + w / 2
             center_mass_y = y + h / 2
+            ((x,y), radius) = cv2.minEnclosingCircle(contour)
+            contour_list.append(contour)
+            
             #
             # tests for if its width is around its height which should be true
 
@@ -74,7 +81,7 @@ def process(img, camera, frame_cnt, color_profile):
 
             if True :
                 #convert distance to inches
-                distance = shape_util.get_distance(w, 2 * radius, camera.FOCAL_LENGTH)
+                distance = shape_util.distance_in_inches(w)
                 angle = shape_util.get_angle(camera, center_mass_x, center_mass_y)
                 font = cv2.FONT_HERSHEY_DUPLEX
 
@@ -85,21 +92,20 @@ def process(img, camera, frame_cnt, color_profile):
 
                 data = dict(shape='BALL',
                         radius=radius,
-                        index=index,
                         dist=distance,
                         angle=angle,
                         xpos=center_mass_x,
                         ypos=center_mass_y)
 
-                if(not tracking_data):
-                    tracking_data.append(data)
-                else:
-                    for target in tracking_data:
-                        if(data["dist"] < target["dist"]):
-                            tracking_data.insert(tracking_data.index(target), data)
-
+                tracking_data.append(data)
                 # sorter goes here
-
+                # if len(tracking_data) == 0:
+                #     tracking_data.append(data)
+                # else:
+                #     for target in tracking_data:
+                #         if distance < target["dist"]:
+                #             tracking_data.insert(tracking_data.index(target), data)
+                #             break
                 #labels image
                 radius_text = 'radius:%s' % (radius)
                 coordinate_text = 'x:%s y:%s ' % (center_mass_x, center_mass_y)
@@ -111,9 +117,8 @@ def process(img, camera, frame_cnt, color_profile):
                 cv2.putText(original_img, angle_text, (int(x), int(y) - 5), font, .4, colors.WHITE, 1, cv2.LINE_AA)
                 cv2.putText(original_img, radius_text, (int(x), int(y) - 50), font, .4, colors.WHITE, 1, cv2.LINE_AA)
 
-                cv2.circle(original_img, (int(center_mass_x), int(center_mass_y)), 5, colors.GREEN, -1)
-                cv2.drawContours(original_img, contours, index, colors.GREEN, 2)
                 cv2.line(original_img, (FRAME_WIDTH // 2, FRAME_HEIGHT), (int(center_mass_x), int(center_mass_y)), colors.GREEN, 2)
+                cv2.drawContours(original_img, contours, index, colors.GREEN, 2)
 
             elif debug:
 
@@ -128,4 +133,6 @@ def process(img, camera, frame_cnt, color_profile):
     top_center = (FRAME_WIDTH // 2, FRAME_HEIGHT)
     bottom_center = (FRAME_WIDTH // 2, 0)
     cv2.line(original_img, top_center, bottom_center, colors.WHITE, 4)
+
+    tracking_data = sorted(tracking_data, key = lambda i: i['dist'])
     return original_img, tracking_data

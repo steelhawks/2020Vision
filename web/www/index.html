@@ -16,6 +16,7 @@ background-image: radial-gradient( circle farthest-corner at 0.5% 97.2%,  #2fad5
 </style>
 </head>
 <body class="cosmic">
+	<script src="/jquery-3.1.1.min.js"></script>
 
 	<!-- development version, includes helpful console warnings -->
 	<script src="/vue.js"></script>
@@ -51,7 +52,7 @@ background-image: radial-gradient( circle farthest-corner at 0.5% 97.2%,  #2fad5
 			  <td>
 				<div class="form-group">
 				  <label class="form-switch">
-					<input type="checkbox" v-model="controls.enable_camera" @click="enableCamera">
+					<input type="checkbox" v-model="controls.enable_camera">
 					<i class="form-icon"></i>
 				  </label>
 				</div>
@@ -85,7 +86,7 @@ background-image: radial-gradient( circle farthest-corner at 0.5% 97.2%,  #2fad5
 			  </td>
 			</tr>
 		  </tbody>
-		<tbody  v-if="color_profile">
+		<!-- <tbody  v-if="color_profile">
 		  	<tr>
 				<td>RGB Red Threshod</td>
 				<td>{{ color_profile.rgb.red.min }} - {{ color_profile.rgb.red.max }} </td>
@@ -131,7 +132,7 @@ background-image: radial-gradient( circle farthest-corner at 0.5% 97.2%,  #2fad5
 						   type="range" min="0" max="255">
 				</td>
 			</tr>
-		  </tbody>
+		  </tbody> -->
 		</table>
 
 		</div>
@@ -139,23 +140,22 @@ background-image: radial-gradient( circle farthest-corner at 0.5% 97.2%,  #2fad5
   </div>
 
 	</script>
-
+	
 	<div class="columns">
 		<div class="column col-6">
 			<canvas id="canvas"
-					width="960"
-					height="540"
+					width="640"
+					height="480"
 					style="border:1px solid black"></canvas>
 		</div>
 		<div class="column col-5">
-			<img id="processed_image" src=""></img>
+			<img id="processed_image" src="">
 		</div>
 
 
 	<div id="app"></div>
 
 </div>
-
 	<script src="/ws_streamer.js"></script>
 	<script src="/socket.js"></script>
 	<script src="/app.js"></script>

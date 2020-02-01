@@ -16,7 +16,7 @@ def process(image,
             color_mode='rgb',
             apply_mask=False):
 
-    image = cv2.resize(image, ((int)(640), (int)(400)), 0, 0, cv2.INTER_CUBIC)
+    image = cv2.resize(image, ((int)(640), (int)(480)), 0, 0, cv2.INTER_CUBIC)
 
 
     if camera_mode != 'RAW':

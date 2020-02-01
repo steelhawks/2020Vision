@@ -25,7 +25,10 @@ var start_camera_stream = function( websocket_source, target) {
           tdif = (new Date()).getTime() - time_0;
           time_0 = (new Date()).getTime();
           fps = Math.round(5 * 1.0 / (tdif / 1000.0));
-          $('#actual').text(fps);
+          $(document).ready(function(){
+            $('#actual').text(fps);
+          });
+          
       }
   }
 

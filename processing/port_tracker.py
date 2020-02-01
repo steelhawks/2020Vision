@@ -68,17 +68,16 @@ def process(img, camera, frame_cnt, color_profile):
             center_mass_x = x + w / 2
             center_mass_y = y + h / 2
             #
-            if shape_util.dimensions_match(contour, 6, WIDTH_TO_HEIGHT_RATIO):
+            if shape_util.dimensions_match(contour, 6,2, WIDTH_TO_HEIGHT_RATIO):
                 # print 'x:%s, y:%s angle:%s ' % ( center_mass_x, center_mass_y, angle )
                 distance = shape_util.distance_in_inches(w)
                 angle = shape_util.get_angle(camera, center_mass_x, center_mass_y)
                 font = cv2.FONT_HERSHEY_DUPLEX
 
                 # set tracking_data
-                data = dict(shape='PORT',
-                        w=w,
-                        h=h,
-                        index=index,
+                data = dict(shape='BAY',
+                        width=w,
+                        height=h,
                         dist=distance,
                         angle=angle,
                         xpos=center_mass_x,
@@ -88,8 +87,9 @@ def process(img, camera, frame_cnt, color_profile):
                     tracking_data.append(data)
                 else:
                     for target in tracking_data:
-                        if(data["dist"] < target["dist"]):
+                        if(distance < target["dist"]):
                             tracking_data.insert(tracking_data.index(target), data)
+                            break
 
                 num_vertices = shape_util.find_vertices(contour)
                 vertices_text = 'vertices:%s' % (num_vertices)
