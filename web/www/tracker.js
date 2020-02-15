@@ -44,9 +44,9 @@ function draw(targets) {
             octx.fillRect(target.xpos,target.ypos, target.width, target.width * 11/7);
         }
         if(target.shape =='PORT'){
-            x = target.xpos;
-            y = target.ypos;
-            size = target.width;
+            var x = target.xpos;
+            var y = target.ypos;
+            var size = target.width;
             octx.beginPath();
             octx.moveTo(x + size * Math.cos(0), y + size * Math.sin(0));
             for (var side = 0; side < 7; side++) {
