@@ -87,7 +87,7 @@ def process(img, camera, frame_cnt, color_profile):
                 vertices_text = 'vertices:%s' % (num_vertices)
                 coordinate_text = 'x:%s y:%s ' % (center_mass_x, center_mass_y)
                 area_text = 'area:%s width:%s height:%s' % (area, w, h)
-                angle_text = 'angle:%.2f  distance:%s' % (angle, distance)
+                angle_text = 'angle:%.2f  distance:%.2f' % (angle, distance)
 
                 cv2.putText(original_img, coordinate_text, (x, y - 35), font, .4, colors.WHITE, 1, cv2.LINE_AA)
                 cv2.putText(original_img, area_text, (x, y - 20), font, .4, colors.WHITE, 1, cv2.LINE_AA)

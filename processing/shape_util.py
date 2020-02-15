@@ -54,3 +54,6 @@ def get_distance(width_pixel, width_actual, focal_length):
 
 def distance_in_inches(width_pixel):
     return 762 * (width_pixel ** -0.8)
+
+def distance_in_inches_long(width_pixel):
+    return 34618 * x ** -1.06
