@@ -74,7 +74,7 @@ def main():
     #TODO: if no camera, exit and msg no camera
     time.sleep(5)
     logger.info('starting main loop')
-    ws = create_connection("ws://localhost:8080/tracking/ws")
+    ws = create_connection("ws://localhost:5805/tracking/ws")
 
     frame_cnt = 0
     while(True):
