@@ -5,8 +5,8 @@ config.networktables_server_ip = '10.26.1.2'
 # when using static ip for robot
 #config.networktables_server_ip = '10.26.1.11'
 
-config.video_source_number = 1
-config.long_video_source_number = 0
+config.video_source_number = 0
+config.long_video_source_number = 1
 config.networktables_table = 'SmartDashboard'
 
 config.gstreamer_bitrate = '3500000'

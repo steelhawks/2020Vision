@@ -18,8 +18,10 @@ def dimensions_match(contour, vertices, range, desired_ratio):
             temp = w
             w = h
             h = temp
-        MIN_RATIO = desired_ratio * 0.5
-        MAX_RATIO = desired_ratio * 1.50
+        MIN_RATIO = desired_ratio * 0.80
+        MAX_RATIO = desired_ratio * 1.2
+        #MIN_RATIO = desired_ratio * 0.6
+        #MAX_RATIO = desired_ratio * 1.4
 
         ar = w / float(h)
         # print(ar)
@@ -54,3 +56,6 @@ def get_distance(width_pixel, width_actual, focal_length):
 
 def distance_in_inches(width_pixel):
     return 762 * (width_pixel ** -0.8)
+
+def distance_in_inches_long(width_pixel):
+    return 34618 * (width_pixel ** -1.06)

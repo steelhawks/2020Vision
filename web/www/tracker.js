@@ -33,6 +33,7 @@ function draw(targets) {
     var octx = offscreenCanvas.getContext("2d");
     octx.fillStyle = "#0095DD";
     targets.forEach(function(target){
+	console.log(target.shape);    
         if(target.shape == 'BALL'){
             octx.beginPath();
             octx.arc(target.xpos, target.ypos, target.radius, 0, Math.PI*2);
@@ -44,15 +45,18 @@ function draw(targets) {
             octx.fillRect(target.xpos,target.ypos, target.width, target.width * 11/7);
         }
         if(target.shape =='PORT'){
-            x = target.xpos;
-            y = target.ypos;
-            size = target.width;
+            var x = target.xpos;
+	    var y = target.ypos;
+            var size = target.width;
+
+	    octx.strokeStyle = "#0095DD";
             octx.beginPath();
             octx.moveTo(x + size * Math.cos(0), y + size * Math.sin(0));
-            for (var side; side < 7; side++) {
+            for (var side = 0; side < 7; side++) {
                 octx.lineTo(x + size * Math.cos(side * 2 * Math.PI / 6), y + size * Math.sin(side * 2 * Math.PI / 6));
             }
             octx.fill();
+	    octx.closePath();
         }
     })
     ctx.clearRect(0, 0, canvas.width, canvas.height);

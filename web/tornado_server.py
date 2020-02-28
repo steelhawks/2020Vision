@@ -53,7 +53,6 @@ def start():
         color_profiles=color_profile_map
     )
 
-    # ImagePushStreamHandler.start(application=app)
 
     # Start the app
     logger.info("Listening on http://localhost:%s/", config.tornado_server_port)

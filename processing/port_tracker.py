@@ -32,16 +32,18 @@ def process(img, camera, frame_cnt, color_profile):
 
     FRAME_WIDTH = camera.FRAME_WIDTH
     FRAME_HEIGHT = camera.FRAME_HEIGHT
-    
+    hue = color_profile.hsv_hue
+    sat = color_profile.hsv_sat
+    val = color_profile.hsv_val
+
     tracking_data = []
     original_img = img
-
     img = cv2.GaussianBlur(img, (13, 13), 0)
-    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-    hsv_mask = cvfilters.hsv_threshold(img, color_profile)
-    img = cv2.bitwise_and(img, img, hsv_mask)
-    img = cv2.erode(img, None, iterations=2)
-    img = cv2.dilate(img, None, iterations=2)
+    hsv = cv2.cvtColor(img, cv2.COLOR_RGB2HSV)
+    mask = cv2.inRange(hsv, (hue.min, sat.min, val.min),  (hue.max, sat.max, val.max))
+    img = cvfilters.apply_mask(img, mask)
+    # img = cv2.erode(img, None, iterations=2)
+    # img = cv2.dilate(img, None, iterations=2)
     img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
     # if debug:
@@ -68,14 +70,14 @@ def process(img, camera, frame_cnt, color_profile):
             center_mass_x = x + w / 2
             center_mass_y = y + h / 2
             #
-            if shape_util.dimensions_match(contour, 6,2, WIDTH_TO_HEIGHT_RATIO):
+            if shape_util.dimensions_match(contour, 6,1, WIDTH_TO_HEIGHT_RATIO):
                 # print 'x:%s, y:%s angle:%s ' % ( center_mass_x, center_mass_y, angle )
-                distance = shape_util.distance_in_inches(w)
+                distance = shape_util.ge:(w)
                 angle = shape_util.get_angle(camera, center_mass_x, center_mass_y)
                 font = cv2.FONT_HERSHEY_DUPLEX
 
                 # set tracking_data
-                data = dict(shape='BAY',
+                data = dict(shape='PORT',
                         width=w,
                         height=h,
                         dist=distance,

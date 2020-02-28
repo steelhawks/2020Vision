@@ -1,5 +1,5 @@
 {
-    "camera_mode": "BAY",
+    "camera_mode": "HEXAGON",
     "rgb": {
         "r": {
             "min": 0,
@@ -16,16 +16,16 @@
     },
     "hsv": {
         "h": {
-            "min": "59",
-            "max": "83"
+            "min": "52",
+            "max": "77"
         },
         "s": {
-            "min": 42,
-            "max": 255
+            "min": "46",
+            "max": "172"
         },
         "v": {
-            "min": 137,
-            "max": 255
+            "min": "49",
+            "max": "243"
         }
     },
     "hsl": {
