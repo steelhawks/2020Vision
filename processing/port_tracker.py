@@ -72,7 +72,7 @@ def process(img, camera, frame_cnt, color_profile):
             #
             if shape_util.dimensions_match(contour, 6,1, WIDTH_TO_HEIGHT_RATIO):
                 # print 'x:%s, y:%s angle:%s ' % ( center_mass_x, center_mass_y, angle )
-                distance = shape_util.ge:(w)
+                distance = shape_util.distance_in_inches_long(w)
                 angle = shape_util.get_angle(camera, center_mass_x, center_mass_y)
                 font = cv2.FONT_HERSHEY_DUPLEX
 

@@ -202,7 +202,7 @@ def main(): # main method defined
 
                 # if out is not None:
                 #     out.write(frame)
-            if tracking_data is not None and main_controller.send_tracking_data:
+            if len(tracking_data) != 0 and main_controller.send_tracking_data:
                 # sort tracking data by closests object
                 logger.info(tracking_data)
                 tracking_data = sorted(tracking_data, key = lambda i: i['dist'])
