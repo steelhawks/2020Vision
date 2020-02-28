@@ -7,7 +7,7 @@ new Vue({
     controls: {
         enable_camera: false,
         // enable_processing: false,
-        camera_mode: 'BAY'
+        camera_mode: 'RAW'
     },
     targets: []
   },
@@ -16,43 +16,20 @@ new Vue({
     var self = this;
     start_camera_stream("/processed/ws", "processed_image");
   },
+  watch: {
+    'controls.camera_mode': function(){
+      Socket.send({'controls':this.controls})
+    }
+  },
   methods: {
     onTargetUpdate: function(key, value, isNew) {
         //console.log(value);
         this.targets = value
     },
-    enableRaw: function() {
-        var self = this;
-        self.controls.camera_mode = 'RAW';
-        Socket.send({'controls':self.controls})
-
-    },
-    enableBall: function(){
-        var self = this;
-        self.controls.camera_mode = 'BALL';
-        Socket.send({'controls':self.controls})
-    },
-    enableHex: function(){
-        var self = this;
-        self.controls.camera_mode = 'HEXAGON'
-        Socket.send({'controls':self.controls})
-    },
-    enableBay: function(){
-        var self = this;
-        self.controls.camera_mode = 'BAY'
-        Socket.send({'controls':self.controls})
-    },
-
-    // enableProcessing: function(){
-    //     var self = this;
-    //     if(self.controls.enable_processing == false){
-    //       self.controls.enable_processing = true;
-    //     }
-    //     else{
-    //       self.controls.enable_processing = false;
-    //     }
-    //     Socket.send(self.controls)
-    // },
-
+    update: function() {
+      var self = this;
+      // self.controls.camera_mode = mode;
+      // Socket.send({'controls':self.controls})
+    }
   }
 });

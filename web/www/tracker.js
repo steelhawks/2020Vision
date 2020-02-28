@@ -46,10 +46,10 @@ function draw(targets) {
         }
         if(target.shape =='PORT'){
             var x = target.xpos;
-	    var y = target.ypos;
+	        var y = target.ypos;
             var size = target.width;
 
-	    octx.strokeStyle = "#0095DD";
+	        octx.strokeStyle = "#0095DD";
             octx.beginPath();
             octx.moveTo(x + size * Math.cos(0), y + size * Math.sin(0));
             for (var side = 0; side < 7; side++) {

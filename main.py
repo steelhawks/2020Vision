@@ -69,7 +69,7 @@ def main(): # main method defined
 
     if(main_controller.enable_dual_camera):
         longCam = USBCam()
-        longCam.open(config.long_video_source_number)
+        longCam.open(config.wide_video_source_number)
 
     # Set camera properties
     # cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
@@ -97,11 +97,11 @@ def main(): # main method defined
 
     time.sleep(5)
 
-    camera_ws = create_connection("ws://localhost:8080/camera/ws")
-    processed_ws = create_connection("ws://localhost:8080/processed/ws")
-    calibration_ws = create_connection("ws://localhost:8080/calibration/ws")
-    tracking_ws = create_connection("ws://localhost:8080/tracking/ws")
-    controller_listener.start("ws://localhost:8080/dashboard/ws")
+    camera_ws = create_connection("ws://localhost:5805/camera/ws")
+    processed_ws = create_connection("ws://localhost:5805/processed/ws")
+    calibration_ws = create_connection("ws://localhost:5805/calibration/ws")
+    tracking_ws = create_connection("ws://localhost:5805/tracking/ws")
+    controller_listener.start("ws://localhost:5805/dashboard/ws")
 
     logger.info('starting main loop ')
     frame_cnt = 0
@@ -117,7 +117,7 @@ def main(): # main method defined
                 print('opening camera')
                 if main_controller.enable_dual_camera:
                    longCam.open(config.video_source_number)                
-                mainCam.open(config.wide_cam_source_number)
+                mainCam.open(config.wide_video_source_number)
                 # if the cap is not already open, do so
                 
             if main_controller.camera_mode == CAMERA_MODE_HEXAGON and main_controller.enable_dual_camera:
