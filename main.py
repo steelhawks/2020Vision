@@ -10,12 +10,13 @@ from processing import colors
 from cameras import logitech_c270, generic
 from cameras.camera import USBCam, Camera
 from cameras import image_converter
+from cameras.video_async import VideoCaptureAsync
 
 from processing import bay_tracker
 from processing import port_tracker
 from processing import ball_tracker2
 from processing import color_calibrate
-
+from processing import cvfilters
 
 import controls
 from controls import main_controller
@@ -53,8 +54,6 @@ logger = logging.getLogger('app')
 
 def main(): # main method defined
 
-    cv2.destroyAllWindows()
-
     # networktables.init(client=False)
 
     # dashboard = networktables.get()
@@ -64,22 +63,18 @@ def main(): # main method defined
 
     # cap = cv2.VideoCapture(config.video_source_number)
     # cap set to a cv2 object with input from a preset source
-    mainCam = USBCam()
-    mainCam.open(config.video_source_number)
+    wideCam = USBCam()
+    wideCam.open(config.video_source_number)
+    wideVideo = VideoCaptureAsync(wideCam)
+    wideVideo.startReading()
 
     if(main_controller.enable_dual_camera):
-        longCam = USBCam()
-        longCam.open(config.wide_video_source_number)
-
-    # Set camera properties
-    # cap.set(cv2.CAP_PROP_FRAME_WIDTH, 640)
-    # cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 480)
-    # cap.set(cv2.CAP_PROP_FPS, 120)
-    # cap.set(cv2.CAP_PROP_AUTO_EXPOSURE, 0.25)
-    # cap.set(cv2.CAP_PROP_EXPOSURE, 0.02)
-    # cap.set(cv2.CAP_PROP_CONTRAST, 0.0)
+        farCam = USBCam()
+        farCam.open(config.wide_video_source_number)
+        farVideo = VideoCaptureAsync(farCam)
+        farVideo.startReading()
         
-    cap = mainCam.getCam()
+    cap = wideCam.getCam()
     # Set camera properties
     camera = Camera(cap.get(cv2.CAP_PROP_FRAME_WIDTH),
                     cap.get(cv2.CAP_PROP_FRAME_HEIGHT),
@@ -97,17 +92,22 @@ def main(): # main method defined
 
     time.sleep(5)
 
-    camera_ws = create_connection("ws://localhost:5805/camera/ws")
+    # camera_ws = create_connection("ws://localhost:5805/camera/ws")
+    wide_camera_ws = create_connection("ws://localhost:5805/wide_camera/ws")
+    far_camera_ws = create_connection("ws://localhost:5805/far_camera/ws")
     processed_ws = create_connection("ws://localhost:5805/processed/ws")
     calibration_ws = create_connection("ws://localhost:5805/calibration/ws")
     tracking_ws = create_connection("ws://localhost:5805/tracking/ws")
     controller_listener.start("ws://localhost:5805/dashboard/ws")
 
+
+
+
     logger.info('starting main loop ')
     frame_cnt = 0
     while(True):
 
-        tracking_data = None
+        tracking_data = []
 
         frame_cnt += 1
 
@@ -116,28 +116,41 @@ def main(): # main method defined
             if not cap.isOpened():
                 print('opening camera')
                 if main_controller.enable_dual_camera:
-                   longCam.open(config.video_source_number)                
-                mainCam.open(config.wide_video_source_number)
+                   farCam.open(config.video_source_number)                
+                wideCam.open(config.wide_video_source_number)
                 # if the cap is not already open, do so
-                
-            if main_controller.camera_mode == CAMERA_MODE_HEXAGON and main_controller.enable_dual_camera:
-                _, bgr_frame = longCam.read()
-            else:
-                _, bgr_frame = mainCam.read()
             
-            resized_frame = cv2.resize(bgr_frame, ((int)(640), (int)(480)), 0, 0, cv2.INTER_CUBIC)
-            rgb_frame = cv2.cvtColor(resized_frame, cv2.COLOR_BGR2RGB)
+
+
+            _, wide_bgr_frame = wideVideo.read()
+            wide_resized_frame = cvfilters.resize(wide_bgr_frame, 640, 480)
+            wide_rgb_frame = cv2.cvtColor(wide_resized_frame, cv2.COLOR_BGR2RGB)
+
+            if main_controller.enable_dual_camera:
+                _, far_bgr_frame = farVideo.read()
+                far_resized_frame = cvfilters.resize(far_bgr_frame, 640, 480)
+                far_rgb_frame = cv2.cvtColor(far_resized_frame, cv2.COLOR_BGR2RGB)
+
+
+
+            
 
 
             if main_controller.enable_camera_feed:
 
-                jpg=image_converter.convert_to_jpg(rgb_frame)
-                camera_ws.send_binary(jpg)
+                wide_jpg=image_converter.convert_to_jpg(wide_rgb_frame)
+                far_jpg=image_converter.convert_to_jpg(far_rgb_frame)
+                wide_camera_ws.send_binary(wide_jpg)
+                far_camera_ws.send_binary(far_jpg)
+
+                # camera_ws.send_binary(jpg)
                 # take rgb frame and convert it to a displayable jpg form, then send that as binary through websocket
 
             if main_controller.enable_calibration_feed:
-
-                calibration_frame = rgb_frame.copy()
+                if main_controller.camera_mode == CAMERA_MODE_HEXAGON:
+                    calibration_frame = far_rgb_frame.copy()
+                else:
+                    calibration_frame = wide_rgb_frame.copy
 
                 calibration_frame = color_calibrate.process(calibration_frame,
                                                             camera_mode = main_controller.calibration.get('camera_mode', 'RAW'),
@@ -150,7 +163,7 @@ def main(): # main method defined
 
             if main_controller.camera_mode == CAMERA_MODE_RAW:
 
-                processed_frame = rgb_frame
+                processed_frame = wide_rgb_frame
                 # Camera mode set to "raw" - takes rgb frame
 
             elif main_controller.camera_mode == CAMERA_MODE_LOADING_BAY:
@@ -158,7 +171,7 @@ def main(): # main method defined
                 color_profile=main_controller.color_profiles[CAMERA_MODE_LOADING_BAY]
                 # Set color profile to that of "camera mode loading bay"
 
-                processed_frame, tracking_data = bay_tracker.process(rgb_frame,
+                processed_frame, tracking_data = bay_tracker.process(wide_rgb_frame,
                                                             camera,
                                                             frame_cnt,
                                                             color_profile)
@@ -169,7 +182,7 @@ def main(): # main method defined
                 color_profile=main_controller.color_profiles[CAMERA_MODE_BALL] # color profile set to the CAMERA MODE BALL one
                 # print("ball")
 
-                processed_frame, tracking_data = ball_tracker2.process(rgb_frame,
+                processed_frame, tracking_data = ball_tracker2.process(wide_rgb_frame,
                                                             camera,
                                                             frame_cnt,
                                                             color_profile)
@@ -178,7 +191,7 @@ def main(): # main method defined
 
                 color_profile=main_controller.color_profiles[CAMERA_MODE_HEXAGON]
 
-                processed_frame, tracking_data = port_tracker.process(rgb_frame,
+                processed_frame, tracking_data = port_tracker.process(far_rgb_frame,
                                                             camera,
                                                             frame_cnt,
                                                             color_profile)
@@ -207,8 +220,6 @@ def main(): # main method defined
                 logger.info(tracking_data)
                 tracking_data = sorted(tracking_data, key = lambda i: i['dist'])
                 tracking_ws.send(json.dumps(dict(targets=tracking_data)))
-                # put into networktables
-                # dashboard.putStringArray(networktables.keys.vision_target_data, tracking_data)
 
             # cv2.imshow('frame', processed_frame )
             # cv2.waitKey(0)
@@ -218,7 +229,9 @@ def main(): # main method defined
             # IDLE mode
             if cap.isOpened():
                 print('closing camera')
-                cap.release()
+                wideCam.stop()
+                if main_controller.enable_dual_camera:
+                    farCam.stop()
             time.sleep(.3)
 
         # if cv2.waitKey(1) & 0xFF == ord('q'):

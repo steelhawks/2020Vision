@@ -11,13 +11,13 @@ class Controls():
     def __init__(self):
         self.enable_camera = True
 
-        self.enable_camera_feed = False
+        self.enable_camera_feed = True
         self.enable_calibration_feed = False
         self.enable_processing_feed = True
         self.enable_dual_camera = True
         self.send_tracking_data = True
 
-        self.camera_mode = CAMERA_MODE_BALL
+        self.camera_mode = CAMERA_MODE_RAW
         self.enable_feed = True
         self.color_profiles = {}
 

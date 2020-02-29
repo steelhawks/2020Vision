@@ -4,8 +4,9 @@ import logging
 import json
 logger = logging.getLogger(__name__)
 
-class CameraFeedWS(WebSocketHandler):
+class FarCameraFeedWS(WebSocketHandler):
     """
+    watchers is a class level array, anyone connecting shares the same array
     """
     watchers = set()
     def open(self):
@@ -30,14 +31,14 @@ class CameraFeedWS(WebSocketHandler):
         if isinstance(message, str):
             logger.info(message)
             if message == 'open feed':
-                CameraFeedWS.watchers.add(self)
+                FarCameraFeedWS.watchers.add(self)
             if message == 'close feed':
-                CameraFeedWS.watchers.remove(self)
+                FarCameraFeedWS.watchers.remove(self)
         else:
-            for waiter in CameraFeedWS.watchers:
+            for waiter in FarCameraFeedWS.watchers:
                 waiter.write_message(message, binary=True)
 
     def on_close(self):
         logger.info("CameraFeed websocket closed %s" % self.uid)
-        if self in CameraFeedWS.watchers:
-            CameraFeedWS.watchers.remove(self)
+        if self in FarCameraFeedWS.watchers:
+            FarCameraFeedWS.watchers.remove(self)

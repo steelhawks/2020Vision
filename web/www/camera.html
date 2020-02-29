@@ -8,7 +8,7 @@
 
     <script src="/vue.js"></script>
     <script src="/jquery-3.1.1.min.js"></script>
-    <title>Jetson Calibrate</title>
+    <title>Jetson Cameras</title>
 </head>
 
 <body>
@@ -36,13 +36,7 @@
           </label>
         </div>
 
-        <!-- form switch control -->
-        <div class="form-group">
-          <label class="form-switch">
-            <input type="checkbox" :checked="enable_calibration_feed" @change="toggleCalibrationFeed">
-            <i class="form-icon"></i> Calibration Feed
-          </label>
-        </div>
+
 
         <!-- form switch control -->
         <div class="form-group">
@@ -61,18 +55,15 @@
 
     <div class="off-canvas-content">
         <div class="columns">
-          <div class="column col-10">
-
-            <div class="card">
-              <div class="card-image">
-                <img src="" id="image" class="img-responsive">
-              </div>
-              <div class="card-footer">
-              </div>
-            </div>
-
+          <div class="column col-6">
+            <img style="border:1px solid black" src="" id="wide_raw_image" class="img-responsive">
+          </div>
+          <div class="column col-6">
+            <img style="border:1px solid black" src="" id="far_raw_image" class="img-responsive">
           </div>
       </div>
+      <img src="" id="processed_image" class="img-responsive">
+
     </div>
 
   </div>
@@ -112,20 +103,40 @@
           self.enable_calibration_feed = data.enable_calibration_feed
         }
       }
-      start_camera_stream("/camera/ws", "image");
+      start_camera_stream("/processed/ws", "processed_image");
+      start_camera_stream("/far_camera/ws", "far_raw_image");
+      start_camera_stream("/wide_camera/ws", "wide_raw_image");
+
+
+
     },
     methods: {
       toggleCameraFeed: function() {
         this.controls_ws.send(JSON.stringify({request_type: 'contols',
                                             enable_camera_feed: !this.enable_camera_feed}))
+        this.showImage(this.enable_camera_feed, "wide_raw_image")
+        this.showImage(this.enable_camera_feed, "far_raw_image")
+
+        
       },
       toggleProcessingFeed: function() {
         this.controls_ws.send(JSON.stringify({request_type: 'contols',
                                             enable_processing_feed: !this.enable_processing_feed}))
+       this.showImage(this.enable_processing_feed, "processed_image")
+
       },
-      toggleCalibrationFeed: function() {
-        this.controls_ws.send(JSON.stringify({request_type: 'contols',
-                                            enable_calibration_feed: !this.enable_calibration_feed}))
+
+
+      showImage : function(enabled, image){
+        var frame = document.getElementById(image)
+        if(!enabled){
+          console.log("visible");
+          frame.style.visibility= 'visible';
+        }
+        else{
+          console.log("invisible");
+          frame.style.visibility = 'hidden';
+        }
       }
 
     }

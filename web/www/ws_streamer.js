@@ -10,11 +10,13 @@ function new_web_socket(uri_path) {
   return ws;
 }
 
+var imageMap = {};
+var socketMap  = {};
 
 var start_camera_stream = function( websocket_source, target) {
 
-  var image = document.getElementById(target)
-  ws_imagestream = new_web_socket( websocket_source);
+  imageMap[websocket_source] = document.getElementById(target)
+  socketMap[websocket_source] = new_web_socket( websocket_source);
 
   time_0 = (new Date()).getTime();
   counter = 0;
@@ -33,21 +35,27 @@ var start_camera_stream = function( websocket_source, target) {
   }
 
 
-  ws_imagestream.onmessage = function(e) {
+  socketMap[websocket_source].onmessage = function(e) {
+
+      if(e.data == 'connected'){
+        console.log('opening feed ' + websocket_source);
+        socketMap[websocket_source].send("open feed");
+      }
+
       if (e.data instanceof Blob) {
-          update_fps()
-          image.src = URL.createObjectURL(e.data);
-          image.onload = function() {
-              URL.revokeObjectURL(image.src);
+          //update_fps()
+          imageMap[websocket_source].src = URL.createObjectURL(e.data);
+          imageMap[websocket_source].onload = function() {
+              URL.revokeObjectURL(imageMap[websocket_source].src);
           }
       }
   }
 
-  ws_imagestream.onopen = function() {
-      console.log('connected ws_imagestream...');
-      ws_imagestream.send("open feed")
+  socketMap[websocket_source].onopen = function() {
+      console.log('connected ' + websocket_source);
+      //ws_imagestream.send("open feed")
   };
-  ws_imagestream.onclose = function() {
+  socketMap[websocket_source].onclose = function() {
       console.log('closed feed ');
   };
 };
