@@ -1,13 +1,13 @@
 # 2020Vision
 
-Vision processing code written in python3 for 2020 FRC Competition
+Vision processing code written in python3 for 2020 FRC Competition (detects outer port, powercells, and loading bay)
 
 ### dependencies
  - pynetworktables
  - cv2
 
 ### notes
- if running on the nano, no virtualenv is required. If virtualenv is used, create with global site-packages enabled to pull in openCV2
+ if running on the jetson nano, no virtualenv is required. If virtualenv is used, create with global site-packages enabled to pull in openCV2
  ```
   virtualenv -p python3 --system-site-packages 2020Vision
  ```
